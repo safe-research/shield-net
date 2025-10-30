@@ -1,0 +1,8 @@
+[profile.default]
+src = "contracts/src"
+test = "contracts/test"
+script = "contracts/script"
+out = "target/contracts/out"
+libs = ["contracts/lib"]
+cache_path = "target/contracts/cache"
+broadcast = "target/contracts/broadcast"
