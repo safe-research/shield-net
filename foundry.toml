@@ -6,3 +6,10 @@ out = "target/contracts/out"
 libs = ["contracts/lib"]
 cache_path = "target/contracts/cache"
 broadcast = "target/contracts/broadcast"
+
+remappings = [
+  "@/=contracts/src/",
+  "@forge-std/=contracts/lib/forge-std/src/",
+  "@oz/=contracts/lib/openzeppelin-contracts/contracts/",
+]
+auto_detect_remappings = false
