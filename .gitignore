@@ -1,2 +1,19 @@
 target/
 foundry.lock
+
+node_modules
+.env
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+
+.DS_Store
+dist
+dist-ssr
+*.local
