@@ -710,10 +710,14 @@ impl SentinelTransition {
             tracing::warn!(
                 request_id = %event.requestId,
                 state = entry.name(),
-                "oracle result reached from an unexpected state; claiming anyway to keep the claim path alive, if we had a bond to begin with"
+                "oracle result reached from an unexpected state"
             );
         }
         if entry.approve_and_slash_amount().is_none() {
+            tracing::trace!(
+                request_id = %event.requestId,
+                "not committed to request; nothing to claim"
+            );
             return (state, Vec::new());
         }
         let outcome = if entry.self_revealed() {
