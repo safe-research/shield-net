@@ -2,7 +2,7 @@
 
 # `safenet-core` — technical map and risk analysis
 
-Crate: `/home/shebin.guest/safe/safenet/crates/core` (version 0.2.0, edition 2024, 7,644 LOC incl. tests). Method: every `.rs` file in the crate was read in full (`cat -n`); the consumer crates were only grepped/spot-read where cited. `cargo`/`rustc` are not installed and no dependency sources (alloy 2.0.5, sqlx 0.9.0, hkdf 0.13.0, tokio 1.52.3 per `Cargo.lock`) are on disk, so every statement about dependency behaviour is marked "not verified on disk". All line numbers are from the current checkout (`main` @ 82b3e0d).
+Crate: `crates/core` (version 0.2.0, edition 2024, 7,644 LOC incl. tests). Method: every `.rs` file in the crate was read in full (`cat -n`); the consumer crates were only grepped/spot-read where cited. `cargo`/`rustc` are not installed and no dependency sources (alloy 2.0.5, sqlx 0.9.0, hkdf 0.13.0, tokio 1.52.3 per `Cargo.lock`) are on disk, so every statement about dependency behaviour is marked "not verified on disk". All line numbers are from the current checkout (`main` @ 82b3e0d).
 
 Legend for evidence: **E2** = defect visible in cited code with a concrete input described; **I** = inference without a concrete trigger.
 

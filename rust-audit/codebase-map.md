@@ -56,110 +56,110 @@ Trust boundaries, by input:
 
 ## 2. Inventory (canonical file list for coverage)
 
-Line counts are `wc -l` at the audited commit; tests are `#[test]` and `#[tokio::test]` occurrences in that file.
+Line counts are `wc -l` at the audited commit; tests are `#[test]` and `#[tokio::test]` occurrences in that file. Line coverage is from the CI coverage report posted on PR #896 on 2026-09-08 (`cargo llvm-cov`, unit tests only); `n/a` means the file had no instrumented lines. Zero-coverage files are candidates for QA proof-of-concept tests.
 
 **`core`**
 
-| File                       | LOC  | Tests |
-| -------------------------- | ---- | ----- |
-| `driver.rs`                | 318  | 0     |
-| `effects.rs`               | 220  | 6     |
-| `index/blocks.rs`          | 1330 | 23    |
-| `index/bloom.rs`           | 523  | 2     |
-| `index/clock.rs`           | 103  | 2     |
-| `index/events.rs`          | 1516 | 19    |
-| `index/mod.rs`             | 468  | 5     |
-| `kdf.rs`                   | 81   | 4     |
-| `lib.rs`                   | 25   | 0     |
-| `metrics.rs`               | 90   | 0     |
-| `observability/logging.rs` | 21   | 0     |
-| `observability/metrics.rs` | 80   | 1     |
-| `observability/mod.rs`     | 94   | 2     |
-| `provider/mod.rs`          | 166  | 0     |
-| `serialization.rs`         | 34   | 0     |
-| `state/mod.rs`             | 644  | 6     |
-| `state/storage.rs`         | 294  | 7     |
-| `tx/fees.rs`               | 109  | 3     |
-| `tx/mod.rs`                | 719  | 9     |
-| `tx/signer.rs`             | 118  | 1     |
-| `tx/storage.rs`            | 507  | 7     |
-| `tx/types.rs`              | 87   | 0     |
-| `utils.rs`                 | 97   | 0     |
+| File                       | LOC  | Tests | Line cov |
+| -------------------------- | ---- | ----- | -------- |
+| `driver.rs`                | 318  | 0     | 0.0%     |
+| `effects.rs`               | 220  | 6     | 99.0%    |
+| `index/blocks.rs`          | 1330 | 23    | 99.8%    |
+| `index/bloom.rs`           | 523  | 2     | 100%     |
+| `index/clock.rs`           | 103  | 2     | 100%     |
+| `index/events.rs`          | 1516 | 19    | 98.1%    |
+| `index/mod.rs`             | 468  | 5     | 99.2%    |
+| `kdf.rs`                   | 81   | 4     | 100%     |
+| `lib.rs`                   | 25   | 0     | n/a      |
+| `metrics.rs`               | 90   | 0     | 8.8%     |
+| `observability/logging.rs` | 21   | 0     | 0.0%     |
+| `observability/metrics.rs` | 80   | 1     | 83.8%    |
+| `observability/mod.rs`     | 94   | 2     | 77.4%    |
+| `provider/mod.rs`          | 166  | 0     | 18.1%    |
+| `serialization.rs`         | 34   | 0     | 57.1%    |
+| `state/mod.rs`             | 644  | 6     | 99.4%    |
+| `state/storage.rs`         | 294  | 7     | 98.0%    |
+| `tx/fees.rs`               | 109  | 3     | 100%     |
+| `tx/mod.rs`                | 719  | 9     | 95.2%    |
+| `tx/signer.rs`             | 118  | 1     | 82.0%    |
+| `tx/storage.rs`            | 507  | 7     | 98.9%    |
+| `tx/types.rs`              | 87   | 0     | 100%     |
+| `utils.rs`                 | 97   | 0     | 0.0%     |
 
 **`validator`**
 
-| File                    | LOC  | Tests |
-| ----------------------- | ---- | ----- |
-| `bindings.rs`           | 247  | 0     |
-| `config.rs`             | 290  | 4     |
-| `consensus/epoch.rs`    | 95   | 1     |
-| `consensus/group.rs`    | 459  | 5     |
-| `consensus/hashing.rs`  | 249  | 4     |
-| `consensus/mod.rs`      | 5    | 0     |
-| `frost/ecdh.rs`         | 181  | 4     |
-| `frost/error.rs`        | 46   | 0     |
-| `frost/keygen.rs`       | 516  | 0     |
-| `frost/marshal.rs`      | 176  | 0     |
-| `frost/mod.rs`          | 258  | 1     |
-| `frost/participants.rs` | 33   | 1     |
-| `frost/preprocess.rs`   | 189  | 1     |
-| `frost/sign.rs`         | 204  | 1     |
-| `main.rs`               | 99   | 0     |
-| `merkle.rs`             | 142  | 4     |
-| `metrics.rs`            | 132  | 0     |
-| `secrets/mod.rs`        | 6    | 0     |
-| `secrets/nonces.rs`     | 348  | 3     |
-| `secrets/store.rs`      | 447  | 6     |
-| `service/action.rs`     | 381  | 0     |
-| `service/effect.rs`     | 275  | 0     |
-| `service/mod.rs`        | 129  | 0     |
-| `state/keygen.rs`       | 1459 | 0     |
-| `state/mod.rs`          | 515  | 0     |
-| `state/preprocess.rs`   | 248  | 0     |
-| `state/sign.rs`         | 868  | 0     |
-| `state/transactions.rs` | 101  | 0     |
+| File                    | LOC  | Tests | Line cov |
+| ----------------------- | ---- | ----- | -------- |
+| `bindings.rs`           | 247  | 0     | n/a      |
+| `config.rs`             | 290  | 4     | 96.2%    |
+| `consensus/epoch.rs`    | 95   | 1     | 42.2%    |
+| `consensus/group.rs`    | 459  | 5     | 87.2%    |
+| `consensus/hashing.rs`  | 249  | 4     | 90.5%    |
+| `consensus/mod.rs`      | 5    | 0     | n/a      |
+| `frost/ecdh.rs`         | 181  | 4     | 81.2%    |
+| `frost/error.rs`        | 46   | 0     | 50.0%    |
+| `frost/keygen.rs`       | 516  | 0     | 86.5%    |
+| `frost/marshal.rs`      | 176  | 0     | 94.8%    |
+| `frost/mod.rs`          | 258  | 1     | 100%     |
+| `frost/participants.rs` | 33   | 1     | 100%     |
+| `frost/preprocess.rs`   | 189  | 1     | 77.2%    |
+| `frost/sign.rs`         | 204  | 1     | 100%     |
+| `main.rs`               | 99   | 0     | 0.0%     |
+| `merkle.rs`             | 142  | 4     | 100%     |
+| `metrics.rs`            | 132  | 0     | 0.0%     |
+| `secrets/mod.rs`        | 6    | 0     | n/a      |
+| `secrets/nonces.rs`     | 348  | 3     | 92.6%    |
+| `secrets/store.rs`      | 447  | 6     | 97.8%    |
+| `service/action.rs`     | 381  | 0     | 0.0%     |
+| `service/effect.rs`     | 275  | 0     | 0.0%     |
+| `service/mod.rs`        | 129  | 0     | 0.0%     |
+| `state/keygen.rs`       | 1459 | 0     | 0.0%     |
+| `state/mod.rs`          | 515  | 0     | 0.0%     |
+| `state/preprocess.rs`   | 248  | 0     | 0.0%     |
+| `state/sign.rs`         | 868  | 0     | 0.0%     |
+| `state/transactions.rs` | 101  | 0     | 0.0%     |
 
 **`sentinel`**
 
-| File          | LOC  | Tests |
-| ------------- | ---- | ----- |
-| `action.rs`   | 43   | 0     |
-| `bindings.rs` | 170  | 0     |
-| `config.rs`   | 144  | 4     |
-| `effect.rs`   | 134  | 1     |
-| `engine.rs`   | 392  | 10    |
-| `hashing.rs`  | 224  | 5     |
-| `main.rs`     | 89   | 0     |
-| `metrics.rs`  | 134  | 0     |
-| `service.rs`  | 1851 | 15    |
-| `state.rs`    | 167  | 2     |
+| File          | LOC  | Tests | Line cov |
+| ------------- | ---- | ----- | -------- |
+| `action.rs`   | 43   | 0     | 100%     |
+| `bindings.rs` | 170  | 0     | 77.8%    |
+| `config.rs`   | 144  | 4     | 86.1%    |
+| `effect.rs`   | 134  | 1     | 100%     |
+| `engine.rs`   | 392  | 10    | 100%     |
+| `hashing.rs`  | 224  | 5     | 100%     |
+| `main.rs`     | 89   | 0     | 0.0%     |
+| `metrics.rs`  | 134  | 0     | 100%     |
+| `service.rs`  | 1851 | 15    | 91.9%    |
+| `state.rs`    | 167  | 2     | 87.5%    |
 
 **`sentinel-engine`**
 
-| File                             | LOC  | Tests |
-| -------------------------------- | ---- | ----- |
-| `api/extractors.rs`              | 69   | 0     |
-| `api/mod.rs`                     | 60   | 0     |
-| `checkers/address_poisoning.rs`  | 457  | 4     |
-| `checkers/base.rs`               | 765  | 20    |
-| `checkers/blocklist.rs`          | 89   | 3     |
-| `checkers/cancellation.rs`       | 72   | 2     |
-| `checkers/cow.rs`                | 1407 | 31    |
-| `checkers/escape_hatch.rs`       | 61   | 0     |
-| `checkers/excessive_approval.rs` | 136  | 4     |
-| `checkers/mod.rs`                | 48   | 0     |
-| `checkers/nested.rs`             | 47   | 0     |
-| `checkers/refund.rs`             | 206  | 7     |
-| `checkers/staking.rs`            | 183  | 0     |
-| `config.rs`                      | 154  | 4     |
-| `contracts/bindings.rs`          | 172  | 0     |
-| `contracts/mod.rs`               | 5    | 0     |
-| `contracts/multi_send.rs`        | 186  | 0     |
-| `contracts/target_effects.rs`    | 454  | 14    |
-| `engine/mod.rs`                  | 121  | 2     |
-| `engine/rule.rs`                 | 164  | 2     |
-| `engine/transaction.rs`          | 170  | 4     |
-| `main.rs`                        | 87   | 0     |
+| File                             | LOC  | Tests | Line cov |
+| -------------------------------- | ---- | ----- | -------- |
+| `api/extractors.rs`              | 69   | 0     | 0.0%     |
+| `api/mod.rs`                     | 60   | 0     | 0.0%     |
+| `checkers/address_poisoning.rs`  | 457  | 4     | 50.6%    |
+| `checkers/base.rs`               | 765  | 20    | 96.2%    |
+| `checkers/blocklist.rs`          | 89   | 3     | 93.3%    |
+| `checkers/cancellation.rs`       | 72   | 2     | 91.7%    |
+| `checkers/cow.rs`                | 1407 | 31    | 96.6%    |
+| `checkers/escape_hatch.rs`       | 61   | 0     | 0.0%     |
+| `checkers/excessive_approval.rs` | 136  | 4     | 96.3%    |
+| `checkers/mod.rs`                | 48   | 0     | 0.0%     |
+| `checkers/nested.rs`             | 47   | 0     | 0.0%     |
+| `checkers/refund.rs`             | 206  | 7     | 90.9%    |
+| `checkers/staking.rs`            | 183  | 0     | 0.0%     |
+| `config.rs`                      | 154  | 4     | 91.5%    |
+| `contracts/bindings.rs`          | 172  | 0     | n/a      |
+| `contracts/mod.rs`               | 5    | 0     | n/a      |
+| `contracts/multi_send.rs`        | 186  | 0     | 92.9%    |
+| `contracts/target_effects.rs`    | 454  | 14    | 100%     |
+| `engine/mod.rs`                  | 121  | 2     | 93.5%    |
+| `engine/rule.rs`                 | 164  | 2     | 100%     |
+| `engine/transaction.rs`          | 170  | 4     | 100%     |
+| `main.rs`                        | 87   | 0     | 0.0%     |
 
 **Non-Rust files in scope**
 
@@ -334,7 +334,7 @@ Seeded hypotheses (from the analysis agent; the Manager re-read the citations fo
 
 Considered and rejected by the agent: panics from malformed bodies or calldata; JSON depth and size bombs; header injection; CoW API spoofing (digest recompute binds the response); block-chunk non-termination; nested MultiSend reaching the recursive decoder today; out-of-range `operation` values; wire drift between sentinel and engine; selector collisions; `transferFrom` forgery on real tokens (needs an allowance; H3 is the allowance-free variant).
 
-Reviewer checklist: items 1 to 12 in the analysis file, section 11. Item 1 (should any checker ever return `secure`, and under which zero-field conditions) is the crate's central question and needs the Charter text.
+Reviewer checklist: items 1 to 13 in the analysis file, section 11. Item 1 (should any checker ever return `secure`, and under which zero-field conditions) is the crate's central question and needs the Charter text.
 
 ## 7. Leads from the Manager's own reading
 
@@ -379,7 +379,7 @@ Ten reviewers, split by risk domain rather than by crate size. A reviewer reads 
 | R5 | validator signing path and secrets | `validator/src/frost/{preprocess,sign}.rs`, `validator/src/merkle.rs`, `validator/src/secrets/*`, `validator/src/state/{preprocess,sign,transactions}.rs`, `validator/src/consensus/hashing.rs` | 2,802 | VAL-H3, H6, H8, H11, M4, M5, M6, M7; validator checklist 3, 4, 5, 10 |
 | R6 | validator service, wiring, config | `validator/src/state/mod.rs`, `validator/src/service/*`, `validator/src/{bindings,config,main,metrics}.rs`, `validator.sample.toml`, `validator/Dockerfile` | 2,068 | VAL-H2, H7, H10, CORE-H4; validator checklist 2, 6, 9, 11, 13 |
 | R7 | sentinel | all of `sentinel/src/*`, `sentinel.sample.toml`, `sentinel/Dockerfile` | 3,348 | SEN-H1 to H15, M8; sentinel checklist 1 to 13 |
-| R8 | engine API, chain, contracts decoding | `sentinel-engine/src/api/*`, `engine/*`, `contracts/*`, `{config,main}.rs`, `openapi.yaml`, `sentinel-engine.sample.toml`, `sentinel-engine/Dockerfile` | 1,642 | ENG-H10 to H14; engine checklist 3, 6, 10, 11 |
+| R8 | engine API, chain, contracts decoding | `sentinel-engine/src/api/*`, `engine/*`, `contracts/*`, `{config,main}.rs`, `openapi.yaml`, `sentinel-engine.sample.toml`, `sentinel-engine/Dockerfile` | 1,642 | ENG-H10 to H14; engine checklist 3, 6, 10, 11, 13 |
 | R9 | engine checkers | `sentinel-engine/src/checkers/*` | 3,275 | ENG-H1 to H9; engine checklist 1, 2, 4, 5, 7, 8, 9, 12 |
 | R10 | cross-cutting | `Cargo.toml`, `Cargo.lock`, `crates/*/Cargo.toml`, all Dockerfiles and sample configs; plus a repo-wide sweep for secrets in `Debug`, logs and metrics, the panic and cast censuses in each analysis (section 8), `cargo audit` and `cargo tree -d` output from Phase 0, and CI gaps (Section 3) | n/a | VAL-H10, SEN-H14, SEN-H15, CORE-H17, ENG-H14 |
 

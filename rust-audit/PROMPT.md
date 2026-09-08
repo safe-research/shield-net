@@ -110,10 +110,16 @@ Documentation. Compile `report/REPORT.md` (Section 9) from the finding files wit
 
 `state/STATE.md` is the single source of truth and overrides conversational memory. On any start, restart, or after compaction, read it first and continue from "Next action". Update it after every agent completion and before every gate.
 
-```markdown
+```text
 # Audit state
 
-Commit: <hash> | Started: <date> | Mode: full | read-only Phase: <n> (<name>) | Gate status: open | waiting-for-operator | PAUSED (usage)
+| Field       | Value                                             |
+| ----------- | ------------------------------------------------- |
+| Commit      | <hash>                                            |
+| Started     | <date>                                            |
+| Mode        | full or read-only                                 |
+| Phase       | <n> (<name>)                                      |
+| Gate status | open, waiting-for-operator, or PAUSED (usage)     |
 
 ## Assumptions confirmed
 
@@ -122,10 +128,12 @@ A1 to A15 ticked, or FALSE notes
 ## Agents
 
 | Agent | Role | Assignment | Status (pending, running, done, failed) | Output paths |
+| ----- | ---- | ---------- | --------------------------------------- | ------------ |
 
 ## Findings
 
 | ID | Title | Status | Severity | Certainty |
+| -- | ----- | ------ | -------- | --------- |
 
 ## Decisions and open questions
 
@@ -146,10 +154,18 @@ Keep: the audit phase, the gate protocol, the rule that rust-audit/state/STATE.m
 
 Path: `findings/F-<CRATE>-<nnn>.md` with `CRATE` in `CORE`, `VAL`, `SEN`, `ENG`, `XC` (cross-cutting). Sections are appended, never rewritten, so the trail shows how the result was finalised.
 
-```markdown
+```text
 # F-VAL-001 <title>
 
-Status: Draft | Critiqued | QA-done | Final: Accepted | Rejected | Unverified Crate and module: validator, secrets/nonces.rs Location: crates/validator/src/secrets/nonces.rs:120-141 (related: ...) Severity: <reviewer> / <final> Certainty: <n>% (set by the Critic; QA may raise) Assumptions involved: A2, A5 Tags: crypto | reorg | dos | crash-consistency | input-validation | deps | config | known | ...
+| Field                | Value                                                                          |
+| -------------------- | ------------------------------------------------------------------------------ |
+| Status               | Draft, Critiqued, QA-done, or Final: Accepted, Rejected, Unverified             |
+| Crate and module     | validator, secrets/nonces.rs                                                   |
+| Location             | crates/validator/src/secrets/nonces.rs:120-141 (related: ...)                  |
+| Severity             | <reviewer> / <final>                                                           |
+| Certainty            | <n>% (set by the Critic; QA may raise)                                         |
+| Assumptions involved | A2, A5                                                                         |
+| Tags                 | crypto, reorg, dos, crash-consistency, input-validation, deps, config, known   |
 
 ## Claim
 
@@ -158,6 +174,7 @@ What is wrong and what an attacker or failure achieves.
 ## Basis
 
 | # | Claim | Class (E1, E2, I) | Citation | Verbatim quote |
+| - | ----- | ----------------- | -------- | -------------- |
 
 ## Trigger
 
@@ -169,7 +186,10 @@ Alternative explanations, guards checked (with citations), and why this is not a
 
 ## Remediation options
 
-1. Option, tradeoffs. 2. Option, tradeoffs. Tests to add. No code is committed.
+1. Option, tradeoffs.
+2. Option, tradeoffs.
+
+Tests to add. No code is committed.
 
 ## Trail
 
@@ -181,7 +201,7 @@ Per-claim verdicts, finding verdict, certainty, counter-evidence.
 
 ## QA (<agent>)
 
-Reproduced | Not reproduced | Not attempted, commands, output path, remediation check.
+Reproduced, Not reproduced, or Not attempted; commands; output path; remediation check.
 ```
 
 Certainty rubric (the Critic sets it; QA may raise it into the top band):
