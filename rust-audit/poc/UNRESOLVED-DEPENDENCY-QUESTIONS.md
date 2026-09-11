@@ -755,4 +755,4 @@ Scoped detail, test sources and full output: `../poc/UNRESOLVED-DEPENDENCY-QUEST
 
 **Also closed in passing:** `frost_core::Identifier::serialize` returns `Vec<u8>` (`identifier.rs:65`); `k256::Scalar::{ZERO, ONE, invert}` are inherent, `from_repr` is `PrimeField`.
 
-**Correction that applies to every PoC README in this audit:** the commands say `cargo test -p validator --lib …`, which fails with `error: no library targets found in package 'validator'`. Use **`--bins`**.
+**Correction that applied to every PoC README in this audit (now fixed in place):** the commands originally said `cargo test -p validator --lib …`, which fails with `error: no library targets found in package 'validator'` because `validator`, `sentinel` and `sentinel-engine` are binary-only crates. They now use **`--bins`**. `safenet-core` does have a `lib.rs`, so `-p safenet-core --lib` is correct and was left alone.

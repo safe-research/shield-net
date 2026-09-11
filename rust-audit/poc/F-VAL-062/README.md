@@ -25,7 +25,7 @@ mod poc_f_val_062;
 ## 3. Command
 
 ```sh
-cargo test -p validator --lib service::poc_f_val_062 -- --nocapture
+cargo test -p validator --bins service::poc_f_val_062 -- --nocapture
 ```
 
 `--nocapture` is **required**: the printed renderings are the primary evidence and the assertions are a convenience.

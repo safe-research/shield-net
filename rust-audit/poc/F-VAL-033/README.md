@@ -35,10 +35,10 @@ Revert both when done.
 
 ```sh
 # the store half — the finding's own proposed regression test, made concrete
-cargo test -p validator --lib secrets::poc_f_val_033 -- --nocapture
+cargo test -p validator --bins secrets::poc_f_val_033 -- --nocapture
 
 # the consequence — one nonce, two messages; then three uses, key recovered
-cargo test -p validator --lib frost::poc_f_val_033_reuse -- --nocapture
+cargo test -p validator --bins frost::poc_f_val_033_reuse -- --nocapture
 ```
 
 ## 3. Fixtures

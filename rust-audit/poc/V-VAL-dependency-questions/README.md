@@ -7,7 +7,7 @@ Two test files written and run by V-VAL to close questions QA-VAL could only des
 | `pragmas.rs` | `crates/validator/src/secrets/mod.rs` | VAL-Q3, VAL-Q4, shared question 12 | `cargo test -p validator --bins secrets::poc_v_val_pragmas -- --nocapture` |
 | `commitment_mismatch.rs` | `crates/validator/src/frost/mod.rs` | VAL-Q6, shared question 13 | `cargo test -p validator --bins frost::poc_v_val_q6 -- --nocapture` |
 
-Note `--bins`. `validator` has no library target, so the `--lib` form used throughout the Phase 3 PoC READMEs fails with `error: no library targets found in package 'validator'`.
+Note `--bins`. `validator` has no library target, so a `--lib` form fails with `error: no library targets found in package 'validator'`. The Phase 3 PoC READMEs originally used `--lib` and have since been corrected to `--bins`.
 
 ## Results
 

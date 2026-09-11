@@ -131,7 +131,7 @@ settles the redaction question locally, in one `cargo test`, with no dependency 
 
 ### Why it is decidable offline, and what a pass means
 
-C-VAL-B's observation is exactly right and it is the whole reason this file has a PoC at all: `KeyShare::dummy` (`crates/validator/src/frost/keygen.rs:443-453`) builds a `KeyPackage` whose signing share is the **known** value `k256::Scalar::ONE`. So the question that A6 makes unanswerable by reading — does `frost-core 3.0.0` redact `SigningShare` in its derived `Debug`? — becomes answerable by printing. `cargo test -p validator --lib service::poc_f_val_062 -- --nocapture`.
+C-VAL-B's observation is exactly right and it is the whole reason this file has a PoC at all: `KeyShare::dummy` (`crates/validator/src/frost/keygen.rs:443-453`) builds a `KeyPackage` whose signing share is the **known** value `k256::Scalar::ONE`. So the question that A6 makes unanswerable by reading — does `frost-core 3.0.0` redact `SigningShare` in its derived `Debug`? — becomes answerable by printing. `cargo test -p validator --bins service::poc_f_val_062 -- --nocapture`.
 
 This is the one PoC in the set where **a pass is also a result, and it partly refutes the finding**:
 

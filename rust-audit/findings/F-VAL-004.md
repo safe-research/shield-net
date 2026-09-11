@@ -128,7 +128,7 @@ Certainty 84%: claims 1-9 are `E2` and re-verified, and I independently confirme
 
 ### What would be run, and what it would show
 
-`cargo test -p validator --lib state::poc_f_val_004`.
+`cargo test -p validator --bins state::poc_f_val_004`.
 
 `a_lost_genesis_setup_stalls_forever` drives the genesis `KeyGen` log, delivers **`Resume::Noop` instead of `Resume::Setup`** — which is literally what `Handler::perform_effect` returns for _any_ error (`crates/validator/src/service/effect.rs:246-252`), so no `sqlx` mocking is needed and the test covers triggers A and B identically — then applies 10 000 `NewBlock` transitions and asserts that none re-emits `Effect::KeyGenSetup` and none queues `Action::KeyGenAndCommit`. Ten thousand blocks is eight `blocks_per_epoch` and eighty-three `key_gen_timeout` windows at A10's parameters. Passing is `E1` for the stall.
 

@@ -36,8 +36,8 @@ mod poc_f_val_061;
 ## 2. Commands
 
 ```sh
-cargo test -p validator --lib state::poc_f_val_030_032_061 -- --nocapture
-cargo test -p validator --lib service::poc_f_val_061 -- --nocapture
+cargo test -p validator --bins state::poc_f_val_030_032_061 -- --nocapture
+cargo test -p validator --bins service::poc_f_val_061 -- --nocapture
 ```
 
 `reconciling_first_makes_the_same_effect_succeed` generates a real 1024-nonce chunk and writes 1025 rows in one transaction, so it takes seconds; `NonceGenerator::start_with_sampler`'s small-chunk test sampler is private to `crate::secrets::nonces` and cannot be reached from `crate::service`. Everything else is instant.

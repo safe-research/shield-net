@@ -30,10 +30,10 @@ This is the _only_ edit to a tracked file, and it is confined to `#[cfg(test)]`.
 
 ```sh
 # all three tests
-cargo test -p validator --lib frost::poc_f_val_001 -- --nocapture
+cargo test -p validator --bins frost::poc_f_val_001 -- --nocapture
 
 # the cheapest and most decisive one on its own (~1 s)
-cargo test -p validator --lib frost::poc_f_val_001::pad_opens_two_recipients_slots
+cargo test -p validator --bins frost::poc_f_val_001::pad_opens_two_recipients_slots
 ```
 
 ## 3. Fixtures — spelled out

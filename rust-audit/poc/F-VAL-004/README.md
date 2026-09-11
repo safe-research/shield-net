@@ -19,7 +19,7 @@ mod poc_f_val_004;
 ## 2. Command
 
 ```sh
-cargo test -p validator --lib state::poc_f_val_004 -- --nocapture
+cargo test -p validator --bins state::poc_f_val_004 -- --nocapture
 ```
 
 Runtime: seconds. 10 000 pure transitions, no I/O, no chain.

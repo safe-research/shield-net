@@ -160,7 +160,7 @@ Certainty is set at the top of the `E2` band rather than above it solely because
 
 ### What would be run, and what it would show
 
-`cargo test -p validator --lib frost::poc_f_val_001`, three tests in increasing strength:
+`cargo test -p validator --bins frost::poc_f_val_001`, three tests in increasing strength:
 
 1. `pad_opens_two_recipients_slots` — that with `q_M := q_A`, one plaintext complaint response opens **two** other participants' ciphertext slots. The algebraic core, ~1 s.
 2. `impostor_share_verifies_and_group_finalizes` — C-VAL-A's step 5, the link the Critic called most likely to be wrong. It includes the **control** the finding needs and neither the reviewer nor the Critic stated as a testable claim: without the harvest, all six peers reject `M`'s share.

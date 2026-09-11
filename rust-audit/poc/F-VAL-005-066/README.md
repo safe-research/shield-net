@@ -33,8 +33,8 @@ mod poc_f_val_005_066_ordering;
 ## 2. Commands
 
 ```sh
-cargo test -p validator --lib secrets::poc_f_val_005_066 -- --nocapture
-cargo test -p validator --lib state::poc_f_val_005_066_ordering -- --nocapture
+cargo test -p validator --bins secrets::poc_f_val_005_066 -- --nocapture
+cargo test -p validator --bins state::poc_f_val_005_066_ordering -- --nocapture
 ```
 
 Both are in-memory SQLite and pure transitions; seconds, no chain, no Anvil.
