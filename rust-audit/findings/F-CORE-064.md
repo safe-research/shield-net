@@ -48,7 +48,7 @@ Claims 1–8 are all `E2`. I have not executed anything (A9 FALSE), and I have n
 - **"The service could simply not set `expires_at`."** Both services set it deliberately for deadline-bearing actions and leave it `None` otherwise (`crates/sentinel/src/service.rs:231, 239, 434` versus `524, 571, 638, 667`). They are using the API as documented; the documentation is what is wrong.
 - **"`prune` will remove it eventually."** Only via `executed_at` (`crates/core/src/tx/storage.rs:250`), i.e. only once the account nonce moves past it. Expiry-based pruning is gated on `nonce IS NULL` (claim 4).
 - **"The in-flight cap bounds the damage."** It bounds the _count_ to `max_in_flight_transactions` (default 16), not the duration or the fee. Sixteen simultaneously-expired transactions each ratcheting their fee is the worse case, not the better one, and it also means no new action can be queued (`crates/core/src/tx/mod.rs:204-216`).
-- **"An operator would see it."** No metric distinguishes an expired in-flight transaction from a healthy one; resubmission logs at `debug` (claim 6) and failures at `warn`. See Observation O6 in `rust-audit/state/agents/R3.md`.
+- **"An operator would see it."** No metric distinguishes an expired in-flight transaction from a healthy one; resubmission logs at `debug` (claim 6) and failures at `warn`. See Observation O6 in `rust-audit/../state/coverage-logs.md#r3`.
 - **Not a duplicate of `F-CORE-060`.** That finding is about the absence of a fee ceiling. This one is about the deadline having no effect after allocation; it would remain true with a fee ceiling in place, because the transaction would still be broadcast indefinitely past its deadline.
 
 ## Remediation options

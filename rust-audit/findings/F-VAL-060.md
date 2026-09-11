@@ -99,7 +99,7 @@ R6 verified the ABI with a self-written pure-Python Keccak. I did not take that 
 - The one digest the Trigger quotes reproduces exactly: `keccak256("KeyGenComplained(bytes32,address,address,bool)") = 0xfacda0c1a23c91046de84f88c9fb4f3cd4360b4ae1b821b127968fa5d9db5fb9`.
 - Spot values for the other injection targets, for QA's benefit: `Sign(address,bytes32,bytes32,bytes32,uint64)` → `b48d242879f9f3df555c800db966f65cba128c7213198748fa202ed54e092691`; `Preprocess(bytes32,address,uint64,bytes32)` → `38107eecb8be72b1b829bce317d7b161fe99c4ac90b58abda7c5ce969f196c6c`; `EpochStaged(uint64,uint64,uint64,bytes32,(uint256,uint256),bytes32,((uint256,uint256),uint256))` → `d22757d0334b80219cf27dedaf82211008f84fc412a29a27e3000dc1c6160b86`.
 
-**One factual correction to the reviewer, not affecting the conclusion.** The Claim and `state/agents/R6.md` both say "all 18 events". There are **17**: five on `Consensus` (`EpochProposed`, `EpochStaged`, `TransactionProposed`, `TransactionAttested`, `ValidatorStakerSet`), eleven on `Coordinator`, one on `Oracle` (`bindings.rs:113-246`). The function count of 18 is right. I recomputed all 17 and all 18; the collision-freedom claim stands, so this is a miscount in the prose, not an `H` on the substance.
+**One factual correction to the reviewer, not affecting the conclusion.** The Claim and `../state/coverage-logs.md#r6` both say "all 18 events". There are **17**: five on `Consensus` (`EpochProposed`, `EpochStaged`, `TransactionProposed`, `TransactionAttested`, `ValidatorStakerSet`), eleven on `Coordinator`, one on `Oracle` (`bindings.rs:113-246`). The function count of 18 is right. I recomputed all 17 and all 18; the collision-freedom claim stands, so this is a miscount in the prose, not an `H` on the substance.
 
 ### Per-claim verdicts
 
@@ -127,7 +127,7 @@ So the precondition is genuinely conditional and stays conditional: it is neithe
 
 ### Addendum (C-VAL-B) — disposition of R4's dangling observations O7 and O8
 
-The Coverage Critic reports that R4's observations **O7** and **O8** (`state/agents/R4.md:290-304`) were parked pending this finding and have no owner. Both are in scope here because both are explicitly "conditional on R6's finding". Judged against the precondition I settled above:
+The Coverage Critic reports that R4's observations **O7** and **O8** (`../state/coverage-logs.md#r4`) were parked pending this finding and have no owner. Both are in scope here because both are explicitly "conditional on R6's finding". Judged against the precondition I settled above:
 
 - **O7 — injected `KeyGenComplained` naming a non-member.** The mechanism is real and I verified its two halves: `handle_key_gen_complained` inserts `event.accused` with no `group.participants.contains(...)` check (`state/keygen.rs:714`), and `also_exclude` over an address that is not in the set leaves the set unchanged, so `participants_set` re-derives the **same** group id and `start_key_gen` re-enters `CollectingCommitments` with an empty `commitments` map for a group the contract will never re-emit `KeyGenCommitted` for. On the honest chain it is unreachable: `FROSTParticipantMap.complain` requires `accusedState.status != ParticipantStatus.NONE` (`contracts/src/libraries/FROSTParticipantMap.sol:187`), so the contract only ever emits an accused that is a registered member.
 - **O8 — `handle_epoch_staged`'s `WaitingForGenesis` recovery trusting `event.proposedEpoch` (`state/keygen.rs:613-635`).** Same shape: authenticated by the contract, unauthenticated locally.

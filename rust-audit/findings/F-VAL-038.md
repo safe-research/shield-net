@@ -275,7 +275,7 @@ What I cannot confirm - and what the reviewer, to their credit, does not assert 
 
 ### One addition the finding does not make
 
-The eager stream compounds `retain`'s behaviour in a way worth recording for the fix: because `ReconcileGroupSecrets` calls `generator.start(...)` for **every** retained group with a key share on **every** block (`service/effect.rs:231-235`), a validator tracking `k` epochs runs `k` detached worker threads, each holding one fully materialised 1024-nonce chunk in memory and each competing for the same global `rayon` pool. That is R5's own observation 4 in `state/agents/R5.md`, which they chose not to file because epoch reaping bounds `k`; I agree it is bounded and do not promote it, but it belongs in this finding's remediation because "make the chunk cheaper" and "make the streams fewer" are the same fix budget.
+The eager stream compounds `retain`'s behaviour in a way worth recording for the fix: because `ReconcileGroupSecrets` calls `generator.start(...)` for **every** retained group with a key share on **every** block (`service/effect.rs:231-235`), a validator tracking `k` epochs runs `k` detached worker threads, each holding one fully materialised 1024-nonce chunk in memory and each competing for the same global `rayon` pool. That is R5's own observation 4 in `../state/coverage-logs.md#r5`, which they chose not to file because epoch reaping bounds `k`; I agree it is bounded and do not promote it, but it belongs in this finding's remediation because "make the chunk cheaper" and "make the streams fewer" are the same fix budget.
 
 ### Finding verdict
 
@@ -291,7 +291,7 @@ The eager stream compounds `retain`'s behaviour in a way worth recording for the
 
 ### What would be run, and what it would show
 
-Recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) **VAL-Q4** and **VAL-Q9**. Two numbers settle the entire escalation from `I` to a decision:
+Recorded as [`../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md) **VAL-Q4** and **VAL-Q9**. Two numbers settle the entire escalation from `I` to a decision:
 
 1. **How long `register_nonces_chunk` holds the writer** for a real 1024-nonce chunk — time it, on the single-core configuration `docs/validator-handbook.md` describes.
 2. **`PRAGMA busy_timeout` on a pool built by `connect_sqlite`** — read it back from a live connection rather than from `sqlx`'s source, which settles it for the version actually pinned.

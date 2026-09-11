@@ -30,6 +30,6 @@ One tier-2 edit was wrong and was corrected manually: `poc/V-XC-phase5/ANSWERED-
 | `findings/F-VAL-002.md` | 249 | `let cyx = y.ecdh(&x.public_key, fy);         // published by Y` |
 | `findings/F-CORE-002.md` | 251 | `let fetch = if retries < self.config.block_single_query_retry_count.get {` |
 | `findings/F-CORE-002.md` | 252 | `if self.config.use_client_filtering { Fetch::ClientFiltered { block_hash, logs_bloom } }` |
-| `state/agents/R6.md` | 78 | `grep -n "fn fetch_logs\\ | fn decode_and_sort\\ | address(self.addresses\\ | address: log.inner.address\\ | macro_rules! watcher_events\\ | fn decode_log\\ | decode_raw_log\\ | SELECTORS" crates/core/src/index/events.rs \| head -30` |
-| `state/agents/R2.md` | 81 | `grep -n "observability::init\\ | tokio::main\\ | fn main" crates/{validator,sentinel,sentinel-engine}/src/main.rs` |
-| `state/agents/R10.md` | 116 | `grep -rn --include='*.rs' 'reqwest::Client\\ | ClientBuilder\\ | Client::new\\ | Client::builder' crates/` |
+| `../state/coverage-logs.md#r6` | 78 | `grep -n "fn fetch_logs\\ | fn decode_and_sort\\ | address(self.addresses\\ | address: log.inner.address\\ | macro_rules! watcher_events\\ | fn decode_log\\ | decode_raw_log\\ | SELECTORS" crates/core/src/index/events.rs \| head -30` |
+| `../state/coverage-logs.md#r2` | 81 | `grep -n "observability::init\\ | tokio::main\\ | fn main" crates/{validator,sentinel,sentinel-engine}/src/main.rs` |
+| `../state/coverage-logs.md#r10` | 116 | `grep -rn --include='*.rs' 'reqwest::Client\\ | ClientBuilder\\ | Client::new\\ | Client::builder' crates/` |

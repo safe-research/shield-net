@@ -103,7 +103,7 @@ Option 2 (prefer the JSON-RPC error code, falling back to the string) is sound a
 
 Option 4 (count consecutive failed attempts per row; after N log at `error` and expose the oldest unexecuted nonce and its attempt count) is the option I would take **first and independently**. It does not depend on the classification being right — which is the whole problem here — and it bounds the blast radius of every future unrecognised message. It is also the same counter **F-CORE-062 option 2** wants, and it makes **F-CORE-060 option 4** nearly free.
 
-**Certainty note:** the trigger is a node's error _wording_, which no dependency source can settle. It needs a client (geth/Nethermind/Erigon) or a testnet, and is recorded as such in `rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS-CORE-SEN.md` §2a so it is not mistaken for a crate question. (That entry originally sat in the shared `UNRESOLVED-DEPENDENCY-QUESTIONS.md`; it was destroyed when that file was overwritten and has been restored to QA-CORE-SEN's own file pending the Manager's merge.)
+**Certainty note:** the trigger is a node's error _wording_, which no dependency source can settle. It needs a client (geth/Nethermind/Erigon) or a testnet, and is recorded as such in `rust-audit/../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md` §2a so it is not mistaken for a crate question. (That entry originally sat in the shared `UNRESOLVED-DEPENDENCY-QUESTIONS.md`; it was destroyed when that file was overwritten and has been restored to QA-CORE-SEN's own file pending the Manager's merge.)
 
 ## In-flight impact (FWD)
 

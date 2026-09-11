@@ -156,7 +156,7 @@ Certainty is set at the top of the `E2` band rather than above it solely because
 
 **Outcome: Reproduced by inspection. Not attempted (no toolchain) for execution.** This does **not** move the finding into the 90-100 band, which needs `E1`; the certainty stays at C-VAL-A's **88%**. Severity Critical / Critical unchanged.
 
-**PoC written:** [`rust-audit/poc/F-VAL-001/`](../poc/F-VAL-001/) — `poc.rs` plus a `README.md` giving the exact command, the fixtures (a 7-participant Anvil-address group, `threshold = 4`) and what a pass and a failure mean per test. It has **never been compiled**; the one identifier I could not check against a definition is flagged there and in [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) VAL-Q1.
+**PoC written:** [`rust-audit/poc/F-VAL-001/`](../poc/F-VAL-001/) — `poc.rs` plus a `README.md` giving the exact command, the fixtures (a 7-participant Anvil-address group, `threshold = 4`) and what a pass and a failure mean per test. It has **never been compiled**; the one identifier I could not check against a definition is flagged there and in [`../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md) VAL-Q1.
 
 ### What would be run, and what it would show
 

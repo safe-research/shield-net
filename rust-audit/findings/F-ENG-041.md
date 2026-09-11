@@ -95,7 +95,7 @@ Corpus shape: this vector, plus the two controls the checker does answer — a r
 
 1. Implement the two remaining R-4.3 novel-recipient signals: the candidate's own on-chain history (an `eth_getLogs`/`eth_getBalance`/`eth_getCode` probe) and a deployment-age heuristic for contracts, denying only when the candidate has no history at all _and_ the amount is a material fraction of the Safe's balance.
 2. Add an amount-relative rule that does not need new RPC: deny when the transfer moves the Safe's entire balance of that token to an address with no in-window history.
-3. Leave the verdict as `Abstain` but surface it distinguishably (see the abstain-ambiguity observation in `rust-audit/state/agents/R9.md`), so operators can see how often the engine has no opinion.
+3. Leave the verdict as `Abstain` but surface it distinguishably (see the abstain-ambiguity observation in `rust-audit/../state/coverage-logs.md#r9`), so operators can see how often the engine has no opinion.
 
 Tests to add: the corpus triple above. No code is committed.
 

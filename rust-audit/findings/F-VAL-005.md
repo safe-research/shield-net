@@ -85,7 +85,7 @@ Tests to add: a state-machine test that drives `Uncle{B}` → `New{B}` → `Logs
 
 ## Trail
 
-- Critic C-VAL-A: drafted. Promoted while mining R4's rejected-hypothesis list (`rust-audit/state/agents/R4.md`, hypothesis **M1** and observation **O2**). R4's M1 refutation is sound for the question M1 asked (pad reuse via replay/overwrite) and I re-verified its contract citation independently; this finding is the adjacent mechanism M1's trace did not cover — deletion of the secrets row by `retain_keygen_secrets` — which R4 left inside O2 as "could not construct a deterministic interleaving from my files alone" and assigned to R6. The interleaving is deterministic and is established by `crates/core/src/state/mod.rs:190-199` (`NewBlock` precedes `Logs` for the same block), which is outside R4's assigned file set. Self-estimate as Critic: Confirmed, 72%.
+- Critic C-VAL-A: drafted. Promoted while mining R4's rejected-hypothesis list (`rust-audit/../state/coverage-logs.md#r4`, hypothesis **M1** and observation **O2**). R4's M1 refutation is sound for the question M1 asked (pad reuse via replay/overwrite) and I re-verified its contract citation independently; this finding is the adjacent mechanism M1's trace did not cover — deletion of the secrets row by `retain_keygen_secrets` — which R4 left inside O2 as "could not construct a deterministic interleaving from my files alone" and assigned to R6. The interleaving is deterministic and is established by `crates/core/src/state/mod.rs:190-199` (`NewBlock` precedes `Logs` for the same block), which is outside R4's assigned file set. Self-estimate as Critic: Confirmed, 72%.
 
 ## Critic (C-VAL-A)
 

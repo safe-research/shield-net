@@ -592,7 +592,7 @@ They are written as in-crate `#[cfg(test)]` modules appended to the file they ex
 
 > **Merge instruction:** add as its own section near the end of the shared file, below the _"diminishing returns"_ line. These are recorded here specifically so they are not mistaken for crate questions and handed to whoever is doing the registry reads — they need a **node** or a **deployed engine**, and no amount of `~/.cargo/registry` will settle either.
 >
-> Two finding QA sections cite this section by name; after the merge they should point at wherever it lands. Until then they cite `rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS-CORE-SEN.md` §2.
+> Two finding QA sections cite this section by name; after the merge they should point at wherever it lands. Until then they cite `rust-audit/../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md` §2.
 
 ### 2a. `F-CORE-061` — what does a node say when it rejects a **first** submission on fee grounds?
 
@@ -745,7 +745,7 @@ If you want the source anyway: `frost-core-3.0.0/src/keys.rs`, the `Debug` impls
 
 ## Answers appended by V-VAL (Phase 5) — questions 1, 12 and 13
 
-Scoped detail, test sources and full output: `UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md` (VAL-Q1 through VAL-Q9) and `V-VAL-dependency-questions/`. Summarised here so the shared list is not stale.
+Scoped detail, test sources and full output: `../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md` (VAL-Q1 through VAL-Q9) and `V-VAL-dependency-questions/`. Summarised here so the shared list is not stale.
 
 **Question 1 — does `frost-core` 3.0.0 redact secrets in `Debug`? — ✅ ANSWERED: yes, it redacts.** `SigningShare` → `SigningShare("<redacted>")` (`frost-core-3.0.0/src/keys.rs:126-133`); `dkg::round1::SecretPackage` → `coefficients: "<redacted>"` (`src/keys/dkg.rs:191-204`); `dkg::round2::SecretPackage` → `secret_share: "<redacted>"` (`:337-350`). Confirmed by executing `poc/F-VAL-062/debug_redaction.rs`, whose verbatim output is quoted in F-VAL-062's verification section. **No secret reaches any log sink today.** This refutes the leak claim in **F-VAL-062**, **F-XC-002** and **F-CORE-036**, all three of which correctly wrote it as class `I`; all three are reduced, and the surviving hygiene claim (the safety is an upstream detail no test here pins) keeps its remediation. _Trap for anyone re-checking:_ `KeyShare::dummy` sets the signing share to `Scalar::ONE` and the identifier to `Identifier::try_from(1)`, so `0000…0001` appears in the rendering as the public **identifier**; a naive substring search reports a leak that is not there.
 

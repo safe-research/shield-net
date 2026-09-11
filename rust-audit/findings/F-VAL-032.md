@@ -213,7 +213,7 @@ Tests to add: a state-machine test that puts a `WaitingForRequest` transaction s
 
 ## Trail
 
-- Reviewer R5: drafted, self-estimate 70%. Confirms the session-drop half of VAL-H6; the "drains chunks faster than the generator can replace them" half is rejected in `rust-audit/state/agents/R5.md`.
+- Reviewer R5: drafted, self-estimate 70%. Confirms the session-drop half of VAL-H6; the "drains chunks faster than the generator can replace them" half is rejected in `rust-audit/../state/coverage-logs.md#r5`.
 
 ## Critic (C-VAL-B)
 

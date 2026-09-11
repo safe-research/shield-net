@@ -73,7 +73,7 @@ Tests to add: a `state/mod.rs` + driver-level test that commits a block emitting
 
 ## Trail
 
-- Critic C-CORE-B: **drafted by the Critic**, not by a Reviewer. Both reviewers whose scopes meet here confirmed the behaviour and each deferred filing it to the other — R2's coverage log (`state/agents/R2.md` §4.1, lead CORE-H5) says "the enqueue/allocate side is `tx/storage.rs:89-104` / `145-156`, explicitly R3's scope", and R3's log (`state/agents/R3.md`, rejected hypothesis 28) says "not mine to file … the _replay_ half lives in `index/blocks.rs` and `state/mod.rs`" while confirming that "`enqueue` is an unconditional `INSERT` with no de-duplication". Raised by the Coverage Critic as an unhomed root cause and re-derived from the code in this session across `state/mod.rs`, `effects.rs`, `driver.rs` and `tx/{mod,storage}.rs` before either log was consulted for anything but attribution.
+- Critic C-CORE-B: **drafted by the Critic**, not by a Reviewer. Both reviewers whose scopes meet here confirmed the behaviour and each deferred filing it to the other — R2's coverage log (`../state/coverage-logs.md#r2` §4.1, lead CORE-H5) says "the enqueue/allocate side is `tx/storage.rs:89-104` / `145-156`, explicitly R3's scope", and R3's log (`../state/coverage-logs.md#r3`, rejected hypothesis 28) says "not mine to file … the _replay_ half lives in `index/blocks.rs` and `state/mod.rs`" while confirming that "`enqueue` is an unconditional `INSERT` with no de-duplication". Raised by the Coverage Critic as an unhomed root cause and re-derived from the code in this session across `state/mod.rs`, `effects.rs`, `driver.rs` and `tx/{mod,storage}.rs` before either log was consulted for anything but attribution.
 
 ## Critic (C-CORE-B)
 

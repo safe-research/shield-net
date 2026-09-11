@@ -128,7 +128,7 @@ Three of the four tests belong to this finding:
 
 ### What the PoC deliberately does **not** settle
 
-The reviewer's step 3/4 — the SQLite write-lock inversion in which `register_nonces_chunk`'s 1025-statement transaction lets the `KeyGenSetup` insert win and the reconciliation delete land after it. That is a genuine race and I did not write a test that forces it, because a test that inserts a sleep proves only that a sleep works. The honest way to settle it is the measurement in [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) VAL-Q4: time `register_nonces_chunk` for a real 1024-nonce chunk against `sqlx`'s busy-timeout default. The certainty stays at 70 for exactly this reason — C-VAL-B held it below F-VAL-005's 72 on the same grounds and that remains right.
+The reviewer's step 3/4 — the SQLite write-lock inversion in which `register_nonces_chunk`'s 1025-statement transaction lets the `KeyGenSetup` insert win and the reconciliation delete land after it. That is a genuine race and I did not write a test that forces it, because a test that inserts a sleep proves only that a sleep works. The honest way to settle it is the measurement in [`../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md) VAL-Q4: time `register_nonces_chunk` for a real 1024-nonce chunk against `sqlx`'s busy-timeout default. The certainty stays at 70 for exactly this reason — C-VAL-B held it below F-VAL-005's 72 on the same grounds and that remains right.
 
 ### What I established by inspection
 

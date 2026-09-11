@@ -37,15 +37,15 @@ All fifteen signed off at Gate 0 on (operator answers recorded below). A8 and A9
 | Agent | Role | Assignment | Status | Output paths |
 | --- | --- | --- | --- | --- |
 | Recon | Recon | baseline, inventory, lockfile dupes | **done** | `state/baseline.md` (407 lines), `state/logs/` (11 logs) |
-| R1 | Reviewer | core indexing + reorgs, 4,106 lines, IDs F-CORE-001..029 | **done** (9 findings, 19 hypotheses rejected, 8 observations) | `state/agents/R1.md` |
-| R2 | Reviewer | core runtime/state/effects/observability, 1,998 lines, IDs F-CORE-030..059 | **done** (10 findings, CORE-H10 + M10 refuted, 11 observations) | `state/agents/R2.md` |
-| R3 | Reviewer | core transaction queue, 1,540 lines, IDs F-CORE-060..089 | **done** (7 findings, 28 hypotheses rejected, 7 observations) | `state/agents/R3.md` |
-| R4 | Reviewer | validator DKG path, 3,228 lines, IDs F-VAL-001..029 | **done** (4 findings, M1 refuted, 10 observations) | `state/agents/R4.md` |
-| R5 | Reviewer | validator signing + secrets, 2,802 lines, IDs F-VAL-030..059 | **done** (9 findings, M4/M5/M7 refuted, 67 excerpts byte-verified) | `state/agents/R5.md` |
-| R6 | Reviewer | validator service/wiring/config, 2,068 lines, IDs F-VAL-060..089 | **done** (7 findings, 19 hypotheses refuted, 8 observations) | `state/agents/R6.md` |
-| R7 | Reviewer | sentinel (all), 3,348 lines, IDs F-SEN-001..049 | **done** (14 findings, M8 refuted, 13 observations) | `state/agents/R7.md` |
-| R8 | Reviewer | engine API/chain/decoding, 1,642 lines, IDs F-ENG-001..029 | **done** (9 findings, 4 of them Charter mismatches) | `state/agents/R8.md` |
-| R9 | Reviewer | engine checkers, 3,471 lines, IDs F-ENG-030..069 | **done** (14 findings inc. 3 Critical, all 9 seeded leads confirmed, 20 rejected) | `state/agents/R9.md` |
+| R1 | Reviewer | core indexing + reorgs, 4,106 lines, IDs F-CORE-001..029 | **done** (9 findings, 19 hypotheses rejected, 8 observations) | `../state/coverage-logs.md#r1` |
+| R2 | Reviewer | core runtime/state/effects/observability, 1,998 lines, IDs F-CORE-030..059 | **done** (10 findings, CORE-H10 + M10 refuted, 11 observations) | `../state/coverage-logs.md#r2` |
+| R3 | Reviewer | core transaction queue, 1,540 lines, IDs F-CORE-060..089 | **done** (7 findings, 28 hypotheses rejected, 7 observations) | `../state/coverage-logs.md#r3` |
+| R4 | Reviewer | validator DKG path, 3,228 lines, IDs F-VAL-001..029 | **done** (4 findings, M1 refuted, 10 observations) | `../state/coverage-logs.md#r4` |
+| R5 | Reviewer | validator signing + secrets, 2,802 lines, IDs F-VAL-030..059 | **done** (9 findings, M4/M5/M7 refuted, 67 excerpts byte-verified) | `../state/coverage-logs.md#r5` |
+| R6 | Reviewer | validator service/wiring/config, 2,068 lines, IDs F-VAL-060..089 | **done** (7 findings, 19 hypotheses refuted, 8 observations) | `../state/coverage-logs.md#r6` |
+| R7 | Reviewer | sentinel (all), 3,348 lines, IDs F-SEN-001..049 | **done** (14 findings, M8 refuted, 13 observations) | `../state/coverage-logs.md#r7` |
+| R8 | Reviewer | engine API/chain/decoding, 1,642 lines, IDs F-ENG-001..029 | **done** (9 findings, 4 of them Charter mismatches) | `../state/coverage-logs.md#r8` |
+| R9 | Reviewer | engine checkers, 3,471 lines, IDs F-ENG-030..069 | **done** (14 findings inc. 3 Critical, all 9 seeded leads confirmed, 20 rejected) | `../state/coverage-logs.md#r9` |
 | C-CORE-A | Critic | R1's 9 findings F-CORE-001..009 + R1's 19 rejected hypotheses; promote into F-CORE-010..029 | **done**: 9/9 critiqued, promoted F-CORE-010/011/012 | appended `## Critic` sections |
 | C-CORE-B | Critic | R2+R3's 17 findings + both rejected lists + the CORE-H5 seam | **done**: 8 Confirmed, 8 Plausible, 0 Refuted, **0 `H`**; promoted F-CORE-040 and F-CORE-067 | `## Critic` sections |
 | C-VAL-A | Critic | R4's 4 findings F-VAL-001..004 + rejected list | **done**: 4 Confirmed, 0 Refuted, **0 `H` claims** (all 41 citations verbatim-accurate), 1 promoted | `## Critic` sections + `findings/F-VAL-005.md` |
@@ -55,7 +55,7 @@ All fifteen signed off at Gate 0 on (operator answers recorded below). A8 and A9
 | C-ENG-B | Critic | R9's 14 findings F-ENG-030..043 (**3 Criticals**) + rejected list | **done**: 14 Confirmed, 0 Refuted, **1 `H`** struck; 5 severities re-judged; promoted F-ENG-044 | `## Critic` sections + `findings/F-ENG-044.md` |
 | C-XC | Critic | R10's 9 findings F-XC-001..009 + rejected list | **done**: 8 Confirmed, 2 Plausible, **0 `H`** in R10's own text; promoted F-XC-010; caught an `H` in another Critic's file | `## Critic` sections + `findings/F-XC-010.md` |
 | Coverage | Coverage Critic | full 83-file matrix, reviewer seams, unexamined leads, toolchain-blocked questions | **done**: `coverage.md` 423 lines, **zero uncovered files**, 4 uncovered seams, 22 blocked questions; filed F-XC-050/051/052 | `state/coverage.md` |
-| R10 | Reviewer | cross-cutting: manifests, Dockerfiles, configs, secret/panic/dep sweeps, IDs F-XC-001..049 | **done** (9 findings, 10 observations, census re-derived) | `state/agents/R10.md` |
+| R10 | Reviewer | cross-cutting: manifests, Dockerfiles, configs, secret/panic/dep sweeps, IDs F-XC-001..049 | **done** (9 findings, 10 observations, census re-derived) | `../state/coverage-logs.md#r10` |
 
 ## Findings
 

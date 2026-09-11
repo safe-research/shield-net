@@ -61,7 +61,7 @@ Tests to add: a `driver.rs` test (the file has no tests today) with a mocked pro
 
 ## Trail
 
-- Critic C-CORE-B: **drafted by the Critic** while auditing R2's rejected hypothesis 2 and observation O-3 (`state/agents/R2.md` §4.2, §5). R2's refutation of the _data-loss_ form of the hypothesis is sound and I confirm it; what was dismissed too quickly is the resource cost of the same cancellation, which O-3 records only as "starvation … self-limiting". Re-derived from `driver.rs:206-231`, `index/events.rs:281-354` and `index/blocks.rs:385-469` in this session.
+- Critic C-CORE-B: **drafted by the Critic** while auditing R2's rejected hypothesis 2 and observation O-3 (`../state/coverage-logs.md#r2` §4.2, §5). R2's refutation of the _data-loss_ form of the hypothesis is sound and I confirm it; what was dismissed too quickly is the resource cost of the same cancellation, which O-3 records only as "starvation … self-limiting". Re-derived from `driver.rs:206-231`, `index/events.rs:281-354` and `index/blocks.rs:385-469` in this session.
 
 ## Critic (C-CORE-B)
 

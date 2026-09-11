@@ -218,7 +218,7 @@ Three things the PoC establishes that the finding's own prose does not:
 2. **It supplies the discriminator.** Today a working `RefundChecker` and a dead one emit identical bytes on the wire (`abstain` either way), which is why the defect survived. The only observable that separates them is "was the lookup issued?", and only an in-process mock can see it.
 3. **The lookalike pair sits exactly on `is_lookalike`'s thresholds** (`prefix >= 4 && suffix >= 4`, `address_poisoning.rs:78-91`): `0xAbCd1111…1111112345` established, `0xAbCd9999…9999992345` candidate. A pair chosen casually will not trip the branch and the test will pass for the wrong reason.
 
-**One unresolved dependency question**, filed as **Q-ENG-A** in `rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS-ENG.md`: whether `alloy::transports::mock::Asserter` exposes a queue-emptiness accessor. It is the only identifier in the ten engine PoCs that could not be checked against a checkout (A6 — no dependency sources on disk). The PoC says inline which three lines to delete if it does not exist, and nothing is lost, because item 1 above establishes the same fact more robustly.
+**One unresolved dependency question**, filed as **Q-ENG-A** in `rust-audit/../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`: whether `alloy::transports::mock::Asserter` exposes a queue-emptiness accessor. It is the only identifier in the ten engine PoCs that could not be checked against a checkout (A6 — no dependency sources on disk). The PoC says inline which three lines to delete if it does not exist, and nothing is lost, because item 1 above establishes the same fact more robustly.
 
 ### Remediation check
 

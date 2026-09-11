@@ -159,7 +159,7 @@ Certainty 84%: claims 1-9 are `E2` and re-verified, and I independently confirme
 
 ### Not covered
 
-That `store_keygen_secrets` really can return `SQLITE_BUSY` under the shipped pool configuration. That is a `sqlx`/SQLite property, not a property of this crate, and it is recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) VAL-Q4. The PoC starts one step later, at the `Resume::Noop` the handler produces for _any_ error, so the finding does not depend on that answer.
+That `store_keygen_secrets` really can return `SQLITE_BUSY` under the shipped pool configuration. That is a `sqlx`/SQLite property, not a property of this crate, and it is recorded as [`../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md) VAL-Q4. The PoC starts one step later, at the `Resume::Noop` the handler produces for _any_ error, so the finding does not depend on that answer.
 
 ## Verification (V-VAL, Phase 5)
 

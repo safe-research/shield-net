@@ -278,7 +278,7 @@ The signing half turns the store defect into the named consequence:
 
 R5 and C-VAL-B both declined to claim key recovery, and they were right: **one** restore gives **two** uses, because each restore un-burns the row and the next `take_nonce` re-burns it, and two equations in three unknowns do not determine `s`. `three_uses_recover_the_signing_share` shows what the arithmetic gives _if_ a third use occurs — two restores of the same stale backup, or one restore plus a further reorg-rebind before the validator re-syncs past the second burn. It should be reported that way, and it should **not** on its own move the certainty. What it does establish is that the severity ceiling here is the _stronger_ of PROMPT.md §8's two headings, not just "nonce reuse" but "recovery of FROST key shares", which supports C-VAL-B's Critical rating on its own terms.
 
-The PoC's challenge derivation is a reimplementation of the ciphersuite's `H2` (recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) VAL-Q2) and is **self-validating**: `signing_round` asserts `z_aggregate·G == R + c·PK` on public data before using `c`, so a wrong domain string fails loudly with a message naming the fix rather than producing a wrong answer.
+The PoC's challenge derivation is a reimplementation of the ciphersuite's `H2` (recorded as [`../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md) VAL-Q2) and is **self-validating**: `signing_round` asserts `z_aggregate·G == R + c·PK` on public data before using `c`, so a wrong domain string fails loudly with a message naming the fix rather than producing a wrong answer.
 
 ### Remediation check
 

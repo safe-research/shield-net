@@ -63,7 +63,7 @@ Tests to add: a `NonceState` unit test asserting that `available` never reports 
 
 ## Trail
 
-- Critic C-VAL-B: drafted. Promoted from `state/agents/R5.md`'s rejected VAL-H6 sub-claim ("drains 1024-nonce chunks faster than the generator can replace them" — REJECTED as "a cost-of-attack question, not a defect"). The citation R5 gives is accurate but measures chunk exhaustion rather than the top-up round trip; re-derived from `preprocess.rs`, `action.rs`, `sign.rs` and the two Solidity libraries. Self-estimate 58%: mechanism `E2` throughout, trigger `E2` for steps 1-4, held below the Confirmed band because the burn rate needed to beat one `preprocess` round trip depends on queue latency and block inclusion, neither measurable in a read-only run (`state/baseline.md` §2).
+- Critic C-VAL-B: drafted. Promoted from `../state/coverage-logs.md#r5`'s rejected VAL-H6 sub-claim ("drains 1024-nonce chunks faster than the generator can replace them" — REJECTED as "a cost-of-attack question, not a defect"). The citation R5 gives is accurate but measures chunk exhaustion rather than the top-up round trip; re-derived from `preprocess.rs`, `action.rs`, `sign.rs` and the two Solidity libraries. Self-estimate 58%: mechanism `E2` throughout, trigger `E2` for steps 1-4, held below the Confirmed band because the burn rate needed to beat one `preprocess` round trip depends on queue latency and block inclusion, neither measurable in a read-only run (`state/baseline.md` §2).
 
 ## QA (QA-VAL)
 
