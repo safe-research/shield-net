@@ -1,27 +1,27 @@
 # F-VAL-034 `handle_nonces` applies a nonce resume to whatever session holds the message, without checking the signature id
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | Verified (mechanism real, outcome benign) |
-| Crate and module     | validator, state/sign.rs                                                        |
-| Location             | crates/validator/src/state/sign.rs:359-404 (related: crates/validator/src/state/sign.rs:138-153, crates/validator/src/service/effect.rs:100-102, 189-201, crates/core/src/state/mod.rs:44-52) |
-| Severity             | Low / Low                                                                       |
-| Certainty            | 55% (V-VAL, Phase 5 — outcome settled by execution; benign) |
-| Assumptions involved | A6                                                                              |
-| Tags                 | crypto, concurrency                                                             |
+| Field | Value |
+| --- | --- |
+| Status | Verified (mechanism real, outcome benign) |
+| Crate and module | validator, state/sign.rs |
+| Location | crates/validator/src/state/sign.rs:359-404 (related: crates/validator/src/state/sign.rs:138-153, crates/validator/src/service/effect.rs:100-102, 189-201, crates/core/src/state/mod.rs:44-52) |
+| Severity | Low / Low |
+| Certainty | 55% (V-VAL, Phase 5 — outcome settled by execution; benign) |
+| Assumptions involved | A6 |
+| Tags | crypto, concurrency |
 
 ## Claim
 
-`Effect::UseNonce` carries `{ message, root, offset }` but `Resume::Nonce` carries only `{ message, nonces }` - the coordinates that identify *which* ceremony the nonce belongs to are dropped on the way back. `handle_nonces` then looks the session up by message alone and feeds the returned secret straight into `frost::sign::signature_share` against whatever `revealed` set is currently in state. Its sibling `handle_nonce_commitments` does check (`if *sid == signature_id`), so the omission looks accidental rather than deliberate.
+`Effect::UseNonce` carries `{ message, root, offset }` but `Resume::Nonce` carries only `{ message, nonces }` - the coordinates that identify _which_ ceremony the nonce belongs to are dropped on the way back. `handle_nonces` then looks the session up by message alone and feeds the returned secret straight into `frost::sign::signature_share` against whatever `revealed` set is currently in state. Its sibling `handle_nonce_commitments` does check (`if *sid == signature_id`), so the omission looks accidental rather than deliberate.
 
-Because the core state machine explicitly states that resume ordering is undefined and that effects may run more than once, a resume from a ceremony that has since timed out and restarted can land on the restarted ceremony for the same message. The only thing that stops the validator publishing a share computed from a stale nonce against a fresh signing package is `frost-core`'s own check that the package's commitment for this signer matches the supplied `SigningNonces`. That crate's source is not in this checkout (A6), so the guard cannot be verified here - the validator has no local defence of its own, and if the upstream check is absent or is ever relaxed the validator emits an invalid share plus a *second* share for the same message, each using a different secret nonce over the same package.
+Because the core state machine explicitly states that resume ordering is undefined and that effects may run more than once, a resume from a ceremony that has since timed out and restarted can land on the restarted ceremony for the same message. The only thing that stops the validator publishing a share computed from a stale nonce against a fresh signing package is `frost-core`'s own check that the package's commitment for this signer matches the supplied `SigningNonces`. That crate's source is not in this checkout (A6), so the guard cannot be verified here - the validator has no local defence of its own, and if the upstream check is absent or is ever relaxed the validator emits an invalid share plus a _second_ share for the same message, each using a different secret nonce over the same package.
 
 This is Low because the realistic outcome is a rejected transaction, and because the window (a full `signing_timeout` of 6 blocks, roughly 30 s on Gnosis, for a single SQLite `DELETE ... RETURNING` to complete) is wide. It is worth fixing because it is the one place in the signing path where correctness is delegated entirely to a dependency, and the fix is three lines.
 
 ## Basis
 
 | # | Claim | Class | Citation | Verbatim quote |
-| - | ----- | ----- | -------- | -------------- |
+| --- | --- | --- | --- | --- |
 | 1 | The resume is matched on the message only; no signature id, root or offset is compared, and the nonce goes directly into the share computation. | E2 | crates/validator/src/state/sign.rs:359-388 | excerpt 1 |
 | 2 | The sibling resume handler does bind the signature id before acting. | E2 | crates/validator/src/state/sign.rs:138-153 | excerpt 2 |
 | 3 | `Resume::Nonce` does not carry the coordinates the effect was issued with. | E2 | crates/validator/src/service/effect.rs:48-54 | excerpt 3 |
@@ -66,6 +66,7 @@ This is Low because the realistic outcome is a rejected transaction, and because
             }
         };
 ```
+
 **`crates/validator/src/state/sign.rs:138-153`**
 
 ```rust
@@ -86,6 +87,7 @@ This is Low because the realistic outcome is a rejected transaction, and because
             _ => return (state, Vec::new()),
         };
 ```
+
 **`crates/validator/src/service/effect.rs:48-54`**
 
 ```rust
@@ -97,6 +99,7 @@ This is Low because the realistic outcome is a rejected transaction, and because
         offset: u64,
     },
 ```
+
 **`crates/validator/src/service/effect.rs:189-201`**
 
 ```rust
@@ -114,6 +117,7 @@ This is Low because the realistic outcome is a rejected transaction, and because
                 })
                 .unwrap_or(Resume::Noop)),
 ```
+
 **`crates/core/src/state/mod.rs:44-52`**
 
 ```rust
@@ -127,6 +131,7 @@ This is Low because the realistic outcome is a rejected transaction, and because
     Resume(Resume),
 }
 ```
+
 **`crates/validator/src/state/sign.rs:662-701`**
 
 ```rust
@@ -171,6 +176,7 @@ This is Low because the realistic outcome is a rejected transaction, and because
                 }
             }
 ```
+
 **`crates/validator/src/frost/sign.rs:78-82`**
 
 ```rust
@@ -195,7 +201,7 @@ Class: `E2` for the missing check and for the state sequence; `I` for the outcom
 ## Considered and rejected
 
 - **"The state machine already prevents two live sessions for one message."** True and irrelevant - the hazard is one session succeeding another under the same key, which basis 6 shows is the designed behaviour on timeout.
-- **"`take_nonce` deleting the row makes a second use impossible."** Correct for the *nonce*, and it is why this is Low rather than a nonce-reuse finding: each `UseNonce` burns a distinct offset (`crates/validator/src/secrets/store.rs:205-218`). What is not prevented is applying nonce A to package B.
+- **"`take_nonce` deleting the row makes a second use impossible."** Correct for the _nonce_, and it is why this is Low rather than a nonce-reuse finding: each `UseNonce` burns a distinct offset (`crates/validator/src/secrets/store.rs:205-218`). What is not prevented is applying nonce A to package B.
 - **"An invalid share leaks the nonce scalars."** Checked and rejected. The bogus `z = d1 + rho*e1 + lambda*c*s_i` is one equation in three unknowns; `d1`/`e1` are never used in a second, valid share because sequence `s1`'s ceremony was abandoned and no other party can complete it. So the impact is a wasted transaction, not a key-material leak.
 - **"`Effect::UseNonce` replay causes the same thing."** No - a replay finds the row already deleted and resumes `Resume::Noop` (basis 4, and the test at `crates/validator/src/secrets/store.rs:421-431`).
 - **Not filed as Informational.** It is the single unguarded seam on the nonce path, and PROMPT.md Section 8 puts anything touching nonce handling above hardening.
@@ -214,128 +220,59 @@ Tests to add: a state-machine test that delivers a `Resume::Nonce` for a session
 
 ## Critic (C-VAL-B)
 
-Derived from `state/sign.rs:138-153` and `:359-404`, `service/effect.rs:48-54` and `:189-201`, and
-`core/state/mod.rs:44-52` before reading the Claim.
+Derived from `state/sign.rs:138-153` and `:359-404`, `service/effect.rs:48-54` and `:189-201`, and `core/state/mod.rs:44-52` before reading the Claim.
 
 ### Independent derivation
 
-`Effect::UseNonce` carries `{ message, root, offset }`; `Resume::Nonce` carries `{ message, nonces }`.
-`handle_nonces` matches on `state.signing.get(&message)` being `CollectSigningShares` and applies the
-returned secret against whatever `revealed` map is in that state, with no comparison of
-`signature_id`, `root` or `offset`. Its sibling `handle_nonce_commitments` does guard
-(`if *sid == signature_id`, `sign.rs:151`). The asymmetry is real and I found it independently.
+`Effect::UseNonce` carries `{ message, root, offset }`; `Resume::Nonce` carries `{ message, nonces }`. `handle_nonces` matches on `state.signing.get(&message)` being `CollectSigningShares` and applies the returned secret against whatever `revealed` map is in that state, with no comparison of `signature_id`, `root` or `offset`. Its sibling `handle_nonce_commitments` does guard (`if *sid == signature_id`, `sign.rs:151`). The asymmetry is real and I found it independently.
 
 ### Per-claim verdicts
 
-All seven basis rows **Supported**; every quote matches this checkout, including
-`core/state/mod.rs:44-52`'s explicit "The order in which effects resume is not well-defined" and
-`frost/sign.rs:78-82`'s comment putting the responsibility on the caller. No `H` claims.
+All seven basis rows **Supported**; every quote matches this checkout, including `core/state/mod.rs:44-52`'s explicit "The order in which effects resume is not well-defined" and `frost/sign.rs:78-82`'s comment putting the responsibility on the caller. No `H` claims.
 
 ### One correction, in the reviewer's favour on the mechanism and against it on the impact
 
-The Claim says the mismatched share's `z` "cannot satisfy the onchain verification". I checked, and
-that is right for a stronger reason than the finding gives: `FROSTCoordinator.signShare` calls
-`FROST.verifyShare(key, selection.r, group.participants.getKey(msg.sender), share, message)`
-**before** registering anything (`contracts/src/FROSTCoordinator.sol:581`), so a `z` computed from
-nonce `s1` against a signing package built from `(D2, E2)` reverts rather than poisoning the
-aggregate. That also disposes of the worst version of this bug: because the selection leaf
-`_hash(participant, share, r)` does **not** include `z`
-(`contracts/src/libraries/FROSTSignatureShares.sol:118-132` - participant, `share.r`, `share.l`,
-group `r`, 192 bytes), an unverifying contract *would* have accepted the bogus share and marked the
-participant `AlreadyIncluded` (`:88`), locking the correct share out. It does verify, so it does not.
-The realised impact is a reverted transaction plus one wasted nonce.
+The Claim says the mismatched share's `z` "cannot satisfy the onchain verification". I checked, and that is right for a stronger reason than the finding gives: `FROSTCoordinator.signShare` calls `FROST.verifyShare(key, selection.r, group.participants.getKey(msg.sender), share, message)` **before** registering anything (`contracts/src/FROSTCoordinator.sol:581`), so a `z` computed from nonce `s1` against a signing package built from `(D2, E2)` reverts rather than poisoning the aggregate. That also disposes of the worst version of this bug: because the selection leaf `_hash(participant, share, r)` does **not** include `z` (`contracts/src/libraries/FROSTSignatureShares.sol:118-132` - participant, `share.r`, `share.l`, group `r`, 192 bytes), an unverifying contract _would_ have accepted the bogus share and marked the participant `AlreadyIncluded` (`:88`), locking the correct share out. It does verify, so it does not. The realised impact is a reverted transaction plus one wasted nonce.
 
-I also checked the cryptographic exposure, which the Claim leaves open. If the mismatched share
-`z' = d1 + rho'*e1 + lambda'*c'*s` is ever published alongside the correct `z2 = d2 + rho'*e2 +
-lambda'*c'*s` for the same package, the `lambda'*c'*s` terms are identical and cancel on subtraction,
-so the difference is a relation in `d1-d2` and `e1-e2` only and carries no information about the
-signing share. There is no key-material consequence here, which is the right reason for Low.
+I also checked the cryptographic exposure, which the Claim leaves open. If the mismatched share `z' = d1 + rho'*e1 + lambda'*c'*s` is ever published alongside the correct `z2 = d2 + rho'*e2 + lambda'*c'*s` for the same package, the `lambda'*c'*s` terms are identical and cancel on subtraction, so the difference is a relation in `d1-d2` and `e1-e2` only and carries no information about the signing share. There is no key-material consequence here, which is the right reason for Low.
 
 ### Where I hold the finding down: the trigger
 
-Step 2 of the Trigger asks a single `DELETE ... RETURNING` on a local SQLite file to stall for a full
-`signing_timeout` - 6 blocks, ~30 s on Gnosis. The proposed cause is contention with
-`register_nonces_chunk`'s 1025-statement transaction (F-VAL-038), plausible as *contention* but two
-orders of magnitude short of 30 s by inspection, and unmeasurable here (`E1` unreachable). No other
-path produces two live ceremonies for one message key: `restart_signing_ceremony` is the only writer
-that reuses the entry (`sign.rs:554-561`) and it runs only at the deadline.
+Step 2 of the Trigger asks a single `DELETE ... RETURNING` on a local SQLite file to stall for a full `signing_timeout` - 6 blocks, ~30 s on Gnosis. The proposed cause is contention with `register_nonces_chunk`'s 1025-statement transaction (F-VAL-038), plausible as _contention_ but two orders of magnitude short of 30 s by inspection, and unmeasurable here (`E1` unreachable). No other path produces two live ceremonies for one message key: `restart_signing_ceremony` is the only writer that reuses the entry (`sign.rs:554-561`) and it runs only at the deadline.
 
 ### Finding verdict
 
-**Plausible - 40%.** Mechanism `E2` and fully verified; the missing guard is real and the fix is the
-three lines the reviewer describes. The trigger is unproven and, on the available evidence, unlikely;
-the residual outcome is class `I` because it turns on `frost-core`'s own commitment check (A6,
-sources not on disk). 40 is the floor of the Plausible band and I place it there deliberately - below
-it the item leaves the report, and a missing `signature_id` comparison on the one path that consumes
-a secret nonce should not leave the report.
+**Plausible - 40%.** Mechanism `E2` and fully verified; the missing guard is real and the fix is the three lines the reviewer describes. The trigger is unproven and, on the available evidence, unlikely; the residual outcome is class `I` because it turns on `frost-core`'s own commitment check (A6, sources not on disk). 40 is the floor of the Plausible band and I place it there deliberately - below it the item leaves the report, and a missing `signature_id` comparison on the one path that consumes a secret nonce should not leave the report.
 
-**Severity: Low (unchanged).** Correct. The worst realised outcome is a reverting transaction and one
-burned nonce; there is no share-leaking consequence, per the cancellation argument above.
+**Severity: Low (unchanged).** Correct. The worst realised outcome is a reverting transaction and one burned nonce; there is no share-leaking consequence, per the cancellation argument above.
 
 ## QA (QA-VAL)
 
-**Outcome: Not attempted (no toolchain).** Certainty unchanged at **40%**; severity Low unchanged.
-No PoC directory — not in my assigned set, and the harness it needs is the one written for F-VAL-004
-([`rust-audit/poc/F-VAL-004/genesis_stall.rs`](../poc/F-VAL-004/genesis_stall.rs)) plus a
-`SigningState` fixture of the kind in
-[`poc/F-VAL-030-032-061/nonce_state.rs`](../poc/F-VAL-030-032-061/nonce_state.rs), which builds
-`SigningState::WaitingForRequest` and `CollectNonceCommitments` values directly. Whoever writes this
-test should start from that file.
+**Outcome: Not attempted (no toolchain).** Certainty unchanged at **40%**; severity Low unchanged. No PoC directory — not in my assigned set, and the harness it needs is the one written for F-VAL-004 ([`rust-audit/poc/F-VAL-004/genesis_stall.rs`](../poc/F-VAL-004/genesis_stall.rs)) plus a `SigningState` fixture of the kind in [`poc/F-VAL-030-032-061/nonce_state.rs`](../poc/F-VAL-030-032-061/nonce_state.rs), which builds `SigningState::WaitingForRequest` and `CollectNonceCommitments` values directly. Whoever writes this test should start from that file.
 
 ### What would be run, and what it would show
 
-The finding's own suggested test: put a restarted session in `state.signing` under a **new**
-`signature_id`, deliver a `Resume::Nonce` produced for the **old** one, and assert no
-`Action::SignShare` is emitted. It fails today, because `handle_nonces` keys only on `message`
-(`state/sign.rs:359-404`) while `handle_nonce_commitments` — three hundred lines earlier in the same
-file — does check the signature id. Running it is `E1` for the missing guard.
+The finding's own suggested test: put a restarted session in `state.signing` under a **new** `signature_id`, deliver a `Resume::Nonce` produced for the **old** one, and assert no `Action::SignShare` is emitted. It fails today, because `handle_nonces` keys only on `message` (`state/sign.rs:359-404`) while `handle_nonce_commitments` — three hundred lines earlier in the same file — does check the signature id. Running it is `E1` for the missing guard.
 
-It is **not** `E1` for the outcome, and that distinction should survive into the report. The outcome
-turns on whether `frost_secp256k1::round2::sign` rejects a `SigningNonces` whose commitments are not
-the ones in the signing package. That is
-[`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) **VAL-Q6** and it
-is a five-minute read of `frost-core-3.0.0/src/round2.rs` once the source is fetched. If the check
-exists, the realised outcome is a warning and one burned nonce; if it does not, the validator
-publishes an invalid share *and* a second valid one for the same message.
+It is **not** `E1` for the outcome, and that distinction should survive into the report. The outcome turns on whether `frost_secp256k1::round2::sign` rejects a `SigningNonces` whose commitments are not the ones in the signing package. That is [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) **VAL-Q6** and it is a five-minute read of `frost-core-3.0.0/src/round2.rs` once the source is fetched. If the check exists, the realised outcome is a warning and one burned nonce; if it does not, the validator publishes an invalid share _and_ a second valid one for the same message.
 
 ### Remediation check
 
-**Option 1 (carry `signature_id` in `Resume::Nonce` and require it to match) is sound and is the fix
-to take.** It is the same guard `handle_nonce_commitments` already applies
-(`state/sign.rs:138-153`), so it makes the two resume handlers consistent rather than introducing a
-new pattern, and consistency is the real argument for it. It respects the runtime contract: the
-signature id travels in the resume value, so the transition stays pure and a stale resume becomes an
-explicit no-op — which is exactly what "resume ordering is undefined"
-(`crates/core/src/state/mod.rs:44-52`) requires a handler to tolerate. The effect already carries
-`signature_id` (`service/effect.rs:42-47`), so this really is one enum field plus one comparison.
+**Option 1 (carry `signature_id` in `Resume::Nonce` and require it to match) is sound and is the fix to take.** It is the same guard `handle_nonce_commitments` already applies (`state/sign.rs:138-153`), so it makes the two resume handlers consistent rather than introducing a new pattern, and consistency is the real argument for it. It respects the runtime contract: the signature id travels in the resume value, so the transition stays pure and a stale resume becomes an explicit no-op — which is exactly what "resume ordering is undefined" (`crates/core/src/state/mod.rs:44-52`) requires a handler to tolerate. The effect already carries `signature_id` (`service/effect.rs:42-47`), so this really is one enum field plus one comparison.
 
-**Option 2 (compare the marshalled commitments against `revealed[&self.account]`) is sound and is a
-weaker version of option 1.** It makes the validator independent of the upstream check, which is the
-point, but it re-derives an identity comparison from cryptographic material when a plain id
-comparison is available and cheaper. Take it only if the team wants defence in depth *as well*;
-`Nonces::reveal` does expose what it needs (`frost/preprocess.rs:47-55`), so it is implementable as
-described.
+**Option 2 (compare the marshalled commitments against `revealed[&self.account]`) is sound and is a weaker version of option 1.** It makes the validator independent of the upstream check, which is the point, but it re-derives an identity comparison from cryptographic material when a plain id comparison is available and cheaper. Take it only if the team wants defence in depth _as well_; `Nonces::reveal` does expose what it needs (`frost/preprocess.rs:47-55`), so it is implementable as described.
 
-**Option 3 (warn with both signature ids) is sound and should not be dropped in review.** Without
-it the condition surfaces as an unexplained reverted `signShare` transaction, and — per F-VAL-065 —
-a reverted transaction is currently recorded as executed and never retried
-(`crates/core/src/tx/storage.rs:222-235`), so there is no other trace at all.
+**Option 3 (warn with both signature ids) is sound and should not be dropped in review.** Without it the condition surfaces as an unexplained reverted `signShare` transaction, and — per F-VAL-065 — a reverted transaction is currently recorded as executed and never retried (`crates/core/src/tx/storage.rs:222-235`), so there is no other trace at all.
 
-**One thing none of the options says:** whichever is taken removes Q6 from the dependency list
-entirely. That is worth stating in the ticket, because it converts "we rely on `frost-core` checking
-something we have not read" into "we check it ourselves", which is the durable form of the fix.
+**One thing none of the options says:** whichever is taken removes Q6 from the dependency list entirely. That is worth stating in the ticket, because it converts "we rely on `frost-core` checking something we have not read" into "we check it ourselves", which is the durable form of the fix.
 
 ## Verification (V-VAL, Phase 5)
 
-**VAL-Q6 / shared question 13 settled by execution. The mechanism is real; the outcome is the benign
-branch, definitively.** This closes the finding's class-`I` half in the direction C-VAL-B expected
-when it floored the certainty at 40.
+**VAL-Q6 / shared question 13 settled by execution. The mechanism is real; the outcome is the benign branch, definitively.** This closes the finding's class-`I` half in the direction C-VAL-B expected when it floored the certainty at 40.
 
 ### The run
 
-`poc/V-VAL-dependency-questions/commitment_mismatch.rs`, a real 2-of-3 DKG through
-`keygen::setup … finalize`, then `sign::signature_share` called with a `Nonces` value from a
-*different* session than the one whose commitment was revealed:
+`poc/V-VAL-dependency-questions/commitment_mismatch.rs`, a real 2-of-3 DKG through `keygen::setup … finalize`, then `sign::signature_share` called with a `Nonces` value from a _different_ session than the one whose commitment was revealed:
 
 ```
 === VAL-Q6 result ===
@@ -344,9 +281,7 @@ stale-nonce signature_share -> Err(Unexpected(IncorrectCommitment))
 test frost::poc_v_val_q6::signing_with_a_nonce_that_does_not_match_the_revealed_commitment_is_rejected ... ok
 ```
 
-The control in the same test — the matching nonce — produces a share, so the rejection is the
-commitment binding and not a broken fixture. Full output:
-`poc/V-VAL-dependency-questions/RESULT-commitment-mismatch.txt`.
+The control in the same test — the matching nonce — produces a share, so the rejection is the commitment binding and not a broken fixture. Full output: `poc/V-VAL-dependency-questions/RESULT-commitment-mismatch.txt`.
 
 ### The source
 
@@ -368,41 +303,22 @@ The check precedes every use of the nonce.
 
 ### What this means for the finding
 
-The code fact stands and is not in dispute: `handle_nonces` (`state/sign.rs:359-404`) applies a
-nonce resume to whatever session currently holds the message without checking the signature id, and
-`core::state` explicitly permits resumes to arrive out of order and effects to run more than once.
-A resume from a ceremony that has since restarted **can** land on the restarted one.
+The code fact stands and is not in dispute: `handle_nonces` (`state/sign.rs:359-404`) applies a nonce resume to whatever session currently holds the message without checking the signature id, and `core::state` explicitly permits resumes to arrive out of order and effects to run more than once. A resume from a ceremony that has since restarted **can** land on the restarted one.
 
-But it cannot produce a signature share over a stale nonce, which was the only path by which this
-finding could have escalated. `frost-core` refuses, the validator surfaces
-`Err(Unexpected(IncorrectCommitment))`, and the observable is a warning and no share — a liveness
-blip on one signing session, not a nonce-reuse event. **This finding cannot reach the severity band
-F-VAL-033 occupies, and the two should not be conflated in the report.**
+But it cannot produce a signature share over a stale nonce, which was the only path by which this finding could have escalated. `frost-core` refuses, the validator surfaces `Err(Unexpected(IncorrectCommitment))`, and the observable is a warning and no share — a liveness blip on one signing session, not a nonce-reuse event. **This finding cannot reach the severity band F-VAL-033 occupies, and the two should not be conflated in the report.**
 
-Certainty **40% → 55%** — raised because the outcome is now known rather than assumed, not because
-the risk grew. Severity **Low** confirmed and now floored: no escalation is available. Status
-**Verified (mechanism real, outcome benign)**.
+Certainty **40% → 55%** — raised because the outcome is now known rather than assumed, not because the risk grew. Severity **Low** confirmed and now floored: no escalation is available. Status **Verified (mechanism real, outcome benign)**.
 
-The remediation is unchanged and still worth doing: `handle_nonces` should check the signature id
-itself. Relying on a dependency's internal consistency check for a property this crate cares about is
-the same structural weakness F-XC-002 describes, and it removes the question permanently.
+The remediation is unchanged and still worth doing: `handle_nonces` should check the signature id itself. Relying on a dependency's internal consistency check for a property this crate cares about is the same structural weakness F-XC-002 describes, and it removes the question permanently.
 
 ## Post-merge revalidation (RV-VAL)
 
-**Verdict: STILL VALID.** Certainty and severity unchanged. Merge commit `a7f3915`, which merges
-`origin/main` and the Certora FROST audit fixes I-01..I-09. `crates/validator` is untouched by
-the merge, so this finding's mechanism is byte-identical.
+**Verdict: STILL VALID.** Certainty and severity unchanged. Merge commit `a7f3915`, which merges `origin/main` and the Certora FROST audit fixes I-01..I-09. `crates/validator` is untouched by the merge, so this finding's mechanism is byte-identical.
 
-The merge shifts `contracts/src/FROSTCoordinator.sol` by two documentation-only hunks
-(`9e41b49`: NatSpec on the `SignShared` event and on `signShare`). Every function this file
-quotes is byte-identical — only its address moved. Corrected citations:
+The merge shifts `contracts/src/FROSTCoordinator.sol` by two documentation-only hunks (`9e41b49`: NatSpec on the `SignShared` event and on `signShare`). Every function this file quotes is byte-identical — only its address moved. Corrected citations:
 
 | Old | New |
 | --- | --- |
 | `FROSTCoordinator.sol:581` (`FROST.verifyShare` runs before registering anything) | **`:592`** (+11 — this citation is past the second doc hunk) |
 
-The line is byte-identical: `FROST.verifyShare(key, selection.r, group.participants.getKey(msg.sender), share, message);`.
-Note that `9e41b49` added a `@dev` note directly above `signShare` (**`:578-582`**) confirming from
-upstream that `l_i` is not derived onchain and is pinned only by the Merkle leaf it is proven
-against — which is the same "the contract checks the share against a caller-supplied coefficient"
-property this finding reasons about.
+The line is byte-identical: `FROST.verifyShare(key, selection.r, group.participants.getKey(msg.sender), share, message);`. Note that `9e41b49` added a `@dev` note directly above `signShare` (**`:578-582`**) confirming from upstream that `l_i` is not derived onchain and is pinned only by the Merkle leaf it is proven against — which is the same "the contract checks the share against a caller-supplied coefficient" property this finding reasons about.

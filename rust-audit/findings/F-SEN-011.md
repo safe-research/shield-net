@@ -1,14 +1,14 @@
 # F-SEN-011 A restart orphans any in-flight engine check whose proposal is older than the rollback anchor: the request is never re-checked and silently expires without a vote
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | Critiqued                                                                      |
-| Crate and module     | sentinel, state.rs / effect.rs / service.rs (with core: effects.rs, index/blocks.rs) |
-| Location             | crates/sentinel/src/state.rs:25-32, crates/sentinel/src/effect.rs:17-26, crates/sentinel/src/service.rs:393-399 (related: crates/core/src/effects.rs:28-36, crates/core/src/index/blocks.rs:255-278) |
-| Severity             | Low / Low                                                                  |
-| Certainty            | 82% (set by Critic C-SEN; QA may raise)                                      |
-| Assumptions involved | A5, A10                                                                        |
-| Tags                 | crash-consistency, reorg                                                        |
+| Field | Value |
+| --- | --- |
+| Status | Critiqued |
+| Crate and module | sentinel, state.rs / effect.rs / service.rs (with core: effects.rs, index/blocks.rs) |
+| Location | crates/sentinel/src/state.rs:25-32, crates/sentinel/src/effect.rs:17-26, crates/sentinel/src/service.rs:393-399 (related: crates/core/src/effects.rs:28-36, crates/core/src/index/blocks.rs:255-278) |
+| Severity | Low / Low |
+| Certainty | 82% (set by Critic C-SEN; QA may raise) |
+| Assumptions involved | A5, A10 |
+| Tags | crash-consistency, reorg |
 
 ## Claim
 
@@ -21,9 +21,9 @@ Impact is missed participation only — no bond is at risk, because no commit wa
 ## Basis
 
 | # | Claim | Class (E1, E2, I) | Citation | Verbatim quote |
-| - | ----- | ----------------- | -------- | -------------- |
-| 1 | The effect needs the full transaction | E2 | crates/sentinel/src/effect.rs:16-26 | `#[derive(Debug, Clone, PartialEq, Eq)]`<br>`pub enum Effect {`<br>`    /// Defer the approve/deny decision for \`request_id\` (a proposed`<br>`    /// \`transaction\` on \`safe\`) to the configured sentinel engine. \`block\` is`<br>`    /// the block number the sentinel considers current.`<br>`    EngineCheck {`<br>`        request_id: B256,`<br>`        transaction: SafeTransaction,`<br>`        block: u64,`<br>`    },`<br>`}` |
-| 2 | The persisted state does not retain the transaction | E2 | crates/sentinel/src/state.rs:25-32 | `pub enum SentinelRequestState {`<br>`    /// The proposal is waiting for its sentinel engine check to complete. If`<br>`    /// the request opens onchain first, its voting data is retained in`<br>`    /// \`request\` until the check resumes.`<br>`    WaitingForEngineCheck {`<br>`        deadline: u64,`<br>`        request: Option<Request>,`<br>`    },` |
+| --- | --- | --- | --- | --- |
+| 1 | The effect needs the full transaction | E2 | crates/sentinel/src/effect.rs:16-26 | `#[derive(Debug, Clone, PartialEq, Eq)]`<br>`pub enum Effect {`<br>`    /// Defer the approve/deny decision for \`request_id\` (a proposed`<br>` /// \`transaction\` on \`safe\`) to the configured sentinel engine. \`block\` is`<br>` /// the block number the sentinel considers current.`<br>` EngineCheck {`<br>` request_id: B256,`<br>` transaction: SafeTransaction,`<br>` block: u64,`<br>` },`<br>`}` |
+| 2 | The persisted state does not retain the transaction | E2 | crates/sentinel/src/state.rs:25-32 | `pub enum SentinelRequestState {`<br>`    /// The proposal is waiting for its sentinel engine check to complete. If`<br>`    /// the request opens onchain first, its voting data is retained in`<br>`    /// \`request\` until the check resumes.`<br>` WaitingForEngineCheck {`<br>` deadline: u64,`<br>` request: Option<Request>,`<br>` },` |
 | 3 | In-flight effects are aborted when the manager is dropped, i.e. at process exit | E2 | crates/core/src/effects.rs:28-36 | `/// Executes effects concurrently and yields their resumes as they complete.`<br>`///`<br>`/// The manager owns all spawned effect tasks. Dropping it aborts any effects`<br>`/// that are still in progress.`<br>`pub struct EffectManager<Handler, Effect, Resume> {`<br>`    handler: Arc<Handler>,`<br>`    tasks: JoinSet<Resume>,`<br>`    effect: PhantomData<fn(Effect)>,`<br>`}` |
 | 4 | A check is only ever created from a `TransactionProposed` event | E2 | crates/sentinel/src/service.rs:137-144 | `        (`<br>`            state,`<br>`            vec![Command::Effect(effect::Effect::EngineCheck {`<br>`                request_id,`<br>`                transaction: event.transaction,`<br>`                block,`<br>`            })],`<br>`        )` |
 | 5 | Replay starts at the earliest retained snapshot, so older logs are never re-delivered | E2 | crates/core/src/index/blocks.rs:256-266 | `            // The earliest retained snapshot is the rollback anchor. Replay`<br>`            // everything after it, but only emit an uncle when there are newer`<br>`            // snapshots to discard. A pruned warp may retain only its latest`<br>`            // snapshot, in which case we can continue directly from the next`<br>`            // block without a synthetic reorg.`<br>`            let uncle = indexed.safe.checked_add(1);`<br>`            if let Some(uncle) = uncle`<br>`                && uncle <= indexed.latest`<br>`            {`<br>`                self.queue.push_back(BlockUpdate::Uncle { number: uncle });`<br>`            }` |
@@ -42,7 +42,7 @@ Impact is missed participation only — no bond is at risk, because no commit wa
 
 ## Considered and rejected
 
-- **"F-SEN-001 covers this."** It does not: F-SEN-001 is the case where the proposal *is* inside the replayed range and the effect *is* re-created (and the replayed `Committed` is then discarded, risking a slash). This finding is the complementary case where the proposal is outside the range, no effect exists, and the loss is participation rather than bond.
+- **"F-SEN-001 covers this."** It does not: F-SEN-001 is the case where the proposal _is_ inside the replayed range and the effect _is_ re-created (and the replayed `Committed` is then discarded, risking a slash). This finding is the complementary case where the proposal is outside the range, no effect exists, and the loss is participation rather than bond.
 - **"The `deadline`/`commit_deadline` retirement is the intended behaviour."** Retiring an entry whose window has closed is correct; the defect is that the entry reached that point without the check ever being retried, which the FSM cannot even detect because `WaitingForEngineCheck` carries no "check outstanding" marker.
 - **"An operator would see it in the engine's request log."** The engine sees fewer requests, not a request that stopped; and the sentinel's own `security_check` span (`engine.rs:126-130`) is only opened when a check is actually issued, so an abandoned one leaves no trace at all.
 - **"Storing the transaction would be too large."** A `SafeTransaction` is bounded by the proposal's calldata, which is bounded by the block gas limit; snapshots already serialise the whole `State` as JSON per block (`core/state/mod.rs:236`), so persisting it would multiply snapshot size by the number of in-flight checks. This is a real tradeoff, which is why remediation option 2 (re-read the log) is offered as an alternative.
@@ -68,7 +68,7 @@ Tests to add: a `StateMachine`-level test that commits a snapshot containing a `
 All rows re-opened; every quote is accurate and no claim is marked `H`.
 
 | # | Verdict | Note |
-| - | ------- | ---- |
+| --- | --- | --- |
 | — | **Supported** | `state.rs:25-32`: `WaitingForEngineCheck { deadline, request: Option<Request> }` — the variant holds no `SafeTransaction`, and `Request` (`state.rs:7-20`) holds only bond and deadline fields. |
 | — | **Supported** | `effect.rs:16-26`: `Effect::EngineCheck` carries `transaction: SafeTransaction`, which exists only in the live effect. |
 | — | **Supported** | `core/effects.rs:28-36` verbatim, including the doc line "Dropping it aborts any effects that are still in progress" — so a restart destroys every in-flight check. |
@@ -77,30 +77,17 @@ All rows re-opened; every quote is accurate and no claim is marked `H`.
 
 ### This is the sentinel instance of F-CORE-031 — cross-referenced, not merged
 
-The defect is exactly F-CORE-031's mechanism: an effect is spawned only after the snapshot that
-records it as pending, and the anchor block is not replayed, so an effect whose originating event
-sits at or below `indexed.safe` is performed zero times from the state machine's point of view.
-F-CORE-031 states this generically and already names the sentinel consequence in its own Claim.
+The defect is exactly F-CORE-031's mechanism: an effect is spawned only after the snapshot that records it as pending, and the anchor block is not replayed, so an effect whose originating event sits at or below `indexed.safe` is performed zero times from the state machine's point of view. F-CORE-031 states this generically and already names the sentinel consequence in its own Claim.
 
-**F-CORE-031 should be canonical**; this file should be kept as the crate-level consequence, because
-it adds one fact the core finding does not have: the sentinel *cannot* recover even if it wanted to,
-since `WaitingForEngineCheck` deliberately does not persist the `SafeTransaction` the effect needs.
-That turns "the resume is lost" into "the check can never be re-issued from state", which is what
-determines the remediation (persist the transaction, or re-read it from the log).
+**F-CORE-031 should be canonical**; this file should be kept as the crate-level consequence, because it adds one fact the core finding does not have: the sentinel _cannot_ recover even if it wanted to, since `WaitingForEngineCheck` deliberately does not persist the `SafeTransaction` the effect needs. That turns "the resume is lost" into "the check can never be re-issued from state", which is what determines the remediation (persist the transaction, or re-read it from the log).
 
-Note the boundary with F-SEN-001, which is *not* the same defect: F-SEN-001 lives in the range the
-rollback **does** replay, where a fresh effect is spawned correctly and the loss comes from the
-sentinel discarding its own replayed `Committed`. Different block, different mechanism, different
-fix, and — critically — different impact (bond slashed vs. no bond at risk).
+Note the boundary with F-SEN-001, which is _not_ the same defect: F-SEN-001 lives in the range the rollback **does** replay, where a fresh effect is spawned correctly and the loss comes from the sentinel discarding its own replayed `Committed`. Different block, different mechanism, different fix, and — critically — different impact (bond slashed vs. no bond at risk).
 
 ### Finding verdict
 
 **Confirmed. Certainty 82%. Severity Low (unchanged).**
 
-`E2` mechanism, deterministic trigger (any restart, for whichever proposals happen to sit in the
-anchor block). Low is right per Section 8: missed participation only — no commit was ever made, so
-no funds are at risk. The substantive complaint is the invisibility, which the finding states
-correctly: no `warn`, no metric, and the reaped entry is indistinguishable from an ordinary expiry.
+`E2` mechanism, deterministic trigger (any restart, for whichever proposals happen to sit in the anchor block). Low is right per Section 8: missed participation only — no commit was ever made, so no funds are at risk. The substantive complaint is the invisibility, which the finding states correctly: no `warn`, no metric, and the reaped entry is indistinguishable from an ordinary expiry.
 
 ## QA (QA-CORE-SEN)
 
@@ -112,27 +99,13 @@ correctly: no `warn`, no metric, and the reaped entry is indistinguishable from 
 
 **Sound: option 3 is the cheapest and helps two other findings; option 1 is the direct fix.**
 
-Option 3 (retain snapshots further back via a `snapshot_retention` independent of `max_reorg_depth`,
-at least `COMMIT_WINDOW` blocks) is the option I would take first, for a reason beyond the one given:
-it is the **same config change F-CORE-001 option 2 needs**, and that option is currently unsound
-without it — the retained window is exactly `max_reorg_depth + 1` snapshots
-(`state/storage.rs:145-161`, `blocks.rs:246`), so "walk back through the retained snapshots until one
-matches the chain" has nothing to walk back to. One knob, two findings. Its cost is storage, and
-snapshots are JSON blobs written per committed block, so the cost is real but linear and measurable.
+Option 3 (retain snapshots further back via a `snapshot_retention` independent of `max_reorg_depth`, at least `COMMIT_WINDOW` blocks) is the option I would take first, for a reason beyond the one given: it is the **same config change F-CORE-001 option 2 needs**, and that option is currently unsound without it — the retained window is exactly `max_reorg_depth + 1` snapshots (`state/storage.rs:145-161`, `blocks.rs:246`), so "walk back through the retained snapshots until one matches the chain" has nothing to walk back to. One knob, two findings. Its cost is storage, and snapshots are JSON blobs written per committed block, so the cost is real but linear and measurable.
 
-Option 1 (persist `transaction: SafeTransaction` in `WaitingForEngineCheck` and re-issue outstanding
-effects on startup) is the direct fix and is sound. Two notes: the re-issue must go through the
-normal command path rather than a special startup path, or it will diverge; and it enlarges every
-snapshot for every tracked request, which interacts with **F-SEN-005**'s unbounded
-`WaitingForDisputeResolution` growth — bigger entries make that leak more expensive.
+Option 1 (persist `transaction: SafeTransaction` in `WaitingForEngineCheck` and re-issue outstanding effects on startup) is the direct fix and is sound. Two notes: the re-issue must go through the normal command path rather than a special startup path, or it will diverge; and it enlarges every snapshot for every tracked request, which interacts with **F-SEN-005**'s unbounded `WaitingForDisputeResolution` growth — bigger entries make that leak more expensive.
 
-Option 2 (re-read the originating `TransactionProposed` by request id via `eth_getLogs` over the
-proposal's block, recording just a `u64`) is sound and keeps snapshots small. It costs one log query
-per stranded request at startup, which is bounded by the number of in-flight requests. Reasonable
-alternative to option 1 if snapshot size matters.
+Option 2 (re-read the originating `TransactionProposed` by request id via `eth_getLogs` over the proposal's block, recording just a `u64`) is sound and keeps snapshots small. It costs one log query per stranded request at startup, which is bounded by the number of in-flight requests. Reasonable alternative to option 1 if snapshot size matters.
 
-Option 4 (a counter for entries retired from `WaitingForEngineCheck` without a verdict, logged at
-`warn`) is the observability floor: today the participation gap is silent and unattributable.
+Option 4 (a counter for entries retired from `WaitingForEngineCheck` without a verdict, logged at `warn`) is the observability floor: today the participation gap is silent and unattributable.
 
 ## Post-merge revalidation (RV-SEN)
 
@@ -140,20 +113,11 @@ Re-validated against merge commit `a7f3915` (baseline `2893917`).
 
 ### Verdict: **STILL VALID** — the cited state shape and effect plumbing are unchanged
 
-- `crates/sentinel/src/state.rs:25-32` — the enum still opens at `:25` and `WaitingForEngineCheck`
-  still holds only `{ deadline: u64, request: Option<Request> }` at `:29-32`. `state.rs` did change
-  in this merge, but only below the enum: a new `WaitingForOutcome` variant at `:80` and two helper
-  methods at `:118-141` and `:157-165`. The transaction bytes the engine needs are still not
-  persisted.
-- `crates/sentinel/src/effect.rs:17-26` — untouched by the merge; `Effect::EngineCheck` still carries
-  the whole `SafeTransaction` in memory only.
-- `crates/sentinel/src/service.rs:393-399` — byte-identical; the orphaned entry is still retired
-  silently, with no log line and no metric distinguishing it from an ordinary expiry.
-- `crates/core/src/effects.rs:28-36` and `crates/core/src/index/blocks.rs:255-278` — `crates/core` is
-  byte-identical across the merge.
+- `crates/sentinel/src/state.rs:25-32` — the enum still opens at `:25` and `WaitingForEngineCheck` still holds only `{ deadline: u64, request: Option<Request> }` at `:29-32`. `state.rs` did change in this merge, but only below the enum: a new `WaitingForOutcome` variant at `:80` and two helper methods at `:118-141` and `:157-165`. The transaction bytes the engine needs are still not persisted.
+- `crates/sentinel/src/effect.rs:17-26` — untouched by the merge; `Effect::EngineCheck` still carries the whole `SafeTransaction` in memory only.
+- `crates/sentinel/src/service.rs:393-399` — byte-identical; the orphaned entry is still retired silently, with no log line and no metric distinguishing it from an ordinary expiry.
+- `crates/core/src/effects.rs:28-36` and `crates/core/src/index/blocks.rs:255-278` — `crates/core` is byte-identical across the merge.
 
-The new `metrics.rs` label (`ResolvedOutcome::RevealMissed`, `metrics.rs:84-89`) does not help here:
-it is only recorded from `handle_oracle_result`, which requires a bond to have been posted, whereas
-this finding's entries expire before any commit.
+The new `metrics.rs` label (`ResolvedOutcome::RevealMissed`, `metrics.rs:84-89`) does not help here: it is only recorded from `handle_oracle_result`, which requires a bond to have been posted, whereas this finding's entries expire before any commit.
 
 **Certainty 82% and severity Low / Low unchanged.** Status left at `Critiqued`.

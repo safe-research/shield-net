@@ -1,14 +1,14 @@
 # F-VAL-038 Nonce chunk generation saturates every core and then holds the shared SQLite writer for 1025 statements, competing with the driver's own snapshot commits
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | QA-done                                                                       |
-| Crate and module     | validator, secrets/store.rs and secrets/nonces.rs                               |
-| Location             | crates/validator/src/secrets/store.rs:141-167, crates/validator/src/frost/preprocess.rs:106-147, crates/validator/src/secrets/nonces.rs:123-143 (related: crates/validator/src/main.rs:46, 62-79, crates/core/src/state/mod.rs:236, crates/core/src/driver.rs:170-197) |
-| Severity             | Low / Low                                                                       |
-| Certainty            | 55% (V-VAL, Phase 5 — VAL-Q4 partly settled; the duration claim is still unmeasured) |
-| Assumptions involved | A9, A10                                                                         |
-| Tags                 | concurrency, dos                                                                |
+| Field | Value |
+| --- | --- |
+| Status | QA-done |
+| Crate and module | validator, secrets/store.rs and secrets/nonces.rs |
+| Location | crates/validator/src/secrets/store.rs:141-167, crates/validator/src/frost/preprocess.rs:106-147, crates/validator/src/secrets/nonces.rs:123-143 (related: crates/validator/src/main.rs:46, 62-79, crates/core/src/state/mod.rs:236, crates/core/src/driver.rs:170-197) |
+| Severity | Low / Low |
+| Certainty | 55% (V-VAL, Phase 5 — VAL-Q4 partly settled; the duration claim is still unmeasured) |
+| Assumptions involved | A9, A10 |
+| Tags | concurrency, dos |
 
 ## Claim
 
@@ -21,7 +21,7 @@ I am rating this Low rather than Medium because I could not measure the transact
 ## Basis
 
 | # | Claim | Class | Citation | Verbatim quote |
-| - | ----- | ----- | -------- | -------------- |
+| --- | --- | --- | --- | --- |
 | 1 | Chunk registration is one transaction containing one statement per nonce, prepared and executed individually. | E2 | crates/validator/src/secrets/store.rs:141-167 | excerpt 1 |
 | 2 | The chunk body is a `rayon` parallel iterator over 1024 items, so it uses the global pool rather than a bounded one. | E2 | crates/validator/src/frost/preprocess.rs:106-147 | excerpt 2 |
 | 3 | The default chunk size is 1024. | E2 | crates/validator/src/frost/preprocess.rs:22-33 | excerpt 3 |
@@ -64,6 +64,7 @@ I am rating this Low rather than Medium because I could not measure the transact
         Ok(root)
     }
 ```
+
 **`crates/validator/src/frost/preprocess.rs:106-147`**
 
 ```rust
@@ -110,6 +111,7 @@ I am rating this Low rather than Medium because I could not measure the transact
         })
     }
 ```
+
 **`crates/validator/src/frost/preprocess.rs:22-33`**
 
 ```rust
@@ -126,6 +128,7 @@ pub fn decode_sequence(sequence: u64) -> (u64, u64) {
     )
 }
 ```
+
 **`crates/validator/src/secrets/nonces.rs:123-143`**
 
 ```rust
@@ -151,6 +154,7 @@ pub fn decode_sequence(sequence: u64) -> (u64, u64) {
         }
     }
 ```
+
 **`crates/validator/src/main.rs:46-46`**
 
 ```rust
@@ -179,6 +183,7 @@ pub fn decode_sequence(sequence: u64) -> (u64, u64) {
     )
     .await?;
 ```
+
 **`crates/core/src/state/mod.rs:230-238`**
 
 ```rust
@@ -192,6 +197,7 @@ pub fn decode_sequence(sequence: u64) -> (u64, u64) {
 
                 (state, status, commands)
 ```
+
 **`crates/core/src/driver.rs:184-197`**
 
 ```rust
@@ -210,6 +216,7 @@ pub fn decode_sequence(sequence: u64) -> (u64, u64) {
             }
         }
 ```
+
 **`crates/core/src/utils.rs:56-62`**
 
 ```rust
@@ -233,7 +240,7 @@ On the configuration the handbook describes - a single core - a 1024-nonce chunk
 ## Considered and rejected
 
 - **"`rayon` blocks the async runtime."** Rejected as stated in the prior analysis, and I agree: `NonceChunk::with_size` is only reached from the dedicated `std::thread` worker (basis 4), never from a tokio task. The problem is not that a future is blocked, it is that the whole process's CPU is consumed by a background task with no concurrency limit.
-- **"One thread per group is the bound."** Only for the *driver* threads; the parallel iterator inside each fans out across the global pool. Rayon's pool sizing is a dependency behaviour and therefore class `I` under A6, which is why basis 2 claims only what the code shows.
+- **"One thread per group is the bound."** Only for the _driver_ threads; the parallel iterator inside each fans out across the global pool. Rayon's pool sizing is a dependency behaviour and therefore class `I` under A6, which is why basis 2 claims only what the code shows.
 - **"1025 inserts is fine, SQLite is fast."** Probably true in absolute terms; the point of the finding is that it is unbatched and unbounded round trips over a shared single-writer resource whose contended failure mode is a process exit, not that any single insert is slow. A single multi-row `INSERT` would remove the question entirely.
 - **"`connect_sqlite` tunes this."** Checked and false - it sets only `idle_timeout(None)` and `max_lifetime(None)`, for the unrelated in-memory-database reason its doc comment gives (basis 8).
 - **"The transaction could be dropped in favour of per-row inserts."** Rejected as a remediation: the transaction is what makes a chunk registration atomic, and losing it would let a crash persist a partial chunk whose root the validator has already committed to. Batch the statements, do not remove the transaction.
@@ -254,139 +261,64 @@ Tests to add: a store benchmark or timed test asserting `register_nonces_chunk` 
 
 ## Critic (C-VAL-B)
 
-Derived from `secrets/store.rs:141-167`, `frost/preprocess.rs:106-147`, `secrets/nonces.rs:123-143`,
-`main.rs:46-79`, `core/state/mod.rs:200-244` and `core/driver.rs:170-197` before reading the Claim.
+Derived from `secrets/store.rs:141-167`, `frost/preprocess.rs:106-147`, `secrets/nonces.rs:123-143`, `main.rs:46-79`, `core/state/mod.rs:200-244` and `core/driver.rs:170-197` before reading the Claim.
 
 ### Per-claim verdicts
 
-All eight basis rows **Supported**; every quote matches this checkout. In particular basis 5 is
-right that `main.rs:46` builds exactly one `SqlitePool` and hands clones to `ValidatorService::new`
-(`:62-69`, which passes it to `SecretStore::new`, `service/mod.rs:50`) and to `Driver::new`
-(`:71-79`, which passes it to both the `StateMachine` snapshot store and the `TransactionQueue`);
-basis 7 is right that `handle_update`'s error propagates out of `Driver::update` into `run`, which
-logs "unrecoverable driver error; exiting" and breaks (`core/driver.rs:193-196`). No `H` claims.
+All eight basis rows **Supported**; every quote matches this checkout. In particular basis 5 is right that `main.rs:46` builds exactly one `SqlitePool` and hands clones to `ValidatorService::new` (`:62-69`, which passes it to `SecretStore::new`, `service/mod.rs:50`) and to `Driver::new` (`:71-79`, which passes it to both the `StateMachine` snapshot store and the `TransactionQueue`); basis 7 is right that `handle_update`'s error propagates out of `Driver::update` into `run`, which logs "unrecoverable driver error; exiting" and breaks (`core/driver.rs:193-196`). No `H` claims.
 
 ### Independent assessment
 
-The two structural facts are unarguable and unconditional: chunk registration is
-`1 + SEQUENCE_CHUNK_SIZE` individually prepared `INSERT`s inside one transaction on the shared pool
-(`store.rs:149-164`, `frost/preprocess.rs:24`), and the chunk body is a `rayon` parallel iterator
-over the process-global pool (`frost/preprocess.rs:123-131`) on a worker that immediately starts the
-next chunk after delivering one (`nonces.rs:125-142`). Both directly contradict the handbook's
-"single core ... average CPU usage under 5%" profile (`docs/validator-handbook.md:17`). That much is
-`E2` and I confirm it.
+The two structural facts are unarguable and unconditional: chunk registration is `1 + SEQUENCE_CHUNK_SIZE` individually prepared `INSERT`s inside one transaction on the shared pool (`store.rs:149-164`, `frost/preprocess.rs:24`), and the chunk body is a `rayon` parallel iterator over the process-global pool (`frost/preprocess.rs:123-131`) on a worker that immediately starts the next chunk after delivering one (`nonces.rs:125-142`). Both directly contradict the handbook's "single core ... average CPU usage under 5%" profile (`docs/validator-handbook.md:17`). That much is `E2` and I confirm it.
 
-What I cannot confirm - and what the reviewer, to their credit, does not assert - is the escalation.
-The chain from "the writer is held for 1025 statements" to "a snapshot commit fails" to "the process
-exits" needs the transaction's duration and `sqlx`'s busy-timeout default, and neither is obtainable:
-no toolchain (`state/baseline.md` §2) and no `sqlx` source on disk (§1, A6). By inspection 1025
-prepared inserts into a local SQLite file is order tens of milliseconds, not the seconds the exit
-path would need. The reviewer says exactly this and rates accordingly.
+What I cannot confirm - and what the reviewer, to their credit, does not assert - is the escalation. The chain from "the writer is held for 1025 statements" to "a snapshot commit fails" to "the process exits" needs the transaction's duration and `sqlx`'s busy-timeout default, and neither is obtainable: no toolchain (`state/baseline.md` §2) and no `sqlx` source on disk (§1, A6). By inspection 1025 prepared inserts into a local SQLite file is order tens of milliseconds, not the seconds the exit path would need. The reviewer says exactly this and rates accordingly.
 
 ### One addition the finding does not make
 
-The eager stream compounds `retain`'s behaviour in a way worth recording for the fix: because
-`ReconcileGroupSecrets` calls `generator.start(...)` for **every** retained group with a key share on
-**every** block (`service/effect.rs:231-235`), a validator tracking `k` epochs runs `k` detached
-worker threads, each holding one fully materialised 1024-nonce chunk in memory and each competing for
-the same global `rayon` pool. That is R5's own observation 4 in `state/agents/R5.md`, which they
-chose not to file because epoch reaping bounds `k`; I agree it is bounded and do not promote it, but
-it belongs in this finding's remediation because "make the chunk cheaper" and "make the streams
-fewer" are the same fix budget.
+The eager stream compounds `retain`'s behaviour in a way worth recording for the fix: because `ReconcileGroupSecrets` calls `generator.start(...)` for **every** retained group with a key share on **every** block (`service/effect.rs:231-235`), a validator tracking `k` epochs runs `k` detached worker threads, each holding one fully materialised 1024-nonce chunk in memory and each competing for the same global `rayon` pool. That is R5's own observation 4 in `state/agents/R5.md`, which they chose not to file because epoch reaping bounds `k`; I agree it is bounded and do not promote it, but it belongs in this finding's remediation because "make the chunk cheaper" and "make the streams fewer" are the same fix budget.
 
 ### Finding verdict
 
-**Plausible - 45%.** Mechanism `E2` (both halves), trigger unproven in the sense that matters: the
-resource cost is certain, the *consequence* that would make it more than a resource cost is `I`. The
-reviewer's self-rating of 60% is above what the evidence carries; 45 places it correctly in the
-Plausible band.
+**Plausible - 45%.** Mechanism `E2` (both halves), trigger unproven in the sense that matters: the resource cost is certain, the _consequence_ that would make it more than a resource cost is `I`. The reviewer's self-rating of 60% is above what the evidence carries; 45 places it correctly in the Plausible band.
 
-**Severity: Low (unchanged).** Correct. Under A9-false conditions I cannot show any attacker-triggered
-denial of service here: the attacker's lever (forcing top-ups via the permissionless
-`Coordinator.sign`) costs them a transaction per sequence and buys them one chunk of CPU, which is a
-poor exchange rate, and the eager background load is present with or without them. Not
-Informational, because the batching fix is cheap (one multi-row `INSERT` via `QueryBuilder`, which
-the file already imports for `retain_groups`) and because the CPU profile contradicts the operating
-documentation the team ships.
+**Severity: Low (unchanged).** Correct. Under A9-false conditions I cannot show any attacker-triggered denial of service here: the attacker's lever (forcing top-ups via the permissionless `Coordinator.sign`) costs them a transaction per sequence and buys them one chunk of CPU, which is a poor exchange rate, and the eager background load is present with or without them. Not Informational, because the batching fix is cheap (one multi-row `INSERT` via `QueryBuilder`, which the file already imports for `retain_groups`) and because the CPU profile contradicts the operating documentation the team ships.
 
-**QA note.** This is the finding a toolchain settles fastest: time `register_nonces_chunk` for 1024
-nonces and read back `PRAGMA busy_timeout` on a pool built by `connect_sqlite`. Both numbers convert
-the entire escalation from `I` to a decision.
+**QA note.** This is the finding a toolchain settles fastest: time `register_nonces_chunk` for 1024 nonces and read back `PRAGMA busy_timeout` on a pool built by `connect_sqlite`. Both numbers convert the entire escalation from `I` to a decision.
 
 ## QA (QA-VAL)
 
-**Outcome: Not attempted (no toolchain).** Certainty unchanged at **45%**; severity Low unchanged.
-No PoC directory: this finding's open question is a **measurement**, not a test, and writing a
-"benchmark" that has never been run would be worse than saying so.
+**Outcome: Not attempted (no toolchain).** Certainty unchanged at **45%**; severity Low unchanged. No PoC directory: this finding's open question is a **measurement**, not a test, and writing a "benchmark" that has never been run would be worse than saying so.
 
 ### What would be run, and what it would show
 
-Recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md)
-**VAL-Q4** and **VAL-Q9**. Two numbers settle the entire escalation from `I` to a decision:
+Recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) **VAL-Q4** and **VAL-Q9**. Two numbers settle the entire escalation from `I` to a decision:
 
-1. **How long `register_nonces_chunk` holds the writer** for a real 1024-nonce chunk — time it, on
-   the single-core configuration `docs/validator-handbook.md` describes.
-2. **`PRAGMA busy_timeout` on a pool built by `connect_sqlite`** — read it back from a live
-   connection rather than from `sqlx`'s source, which settles it for the version actually pinned.
+1. **How long `register_nonces_chunk` holds the writer** for a real 1024-nonce chunk — time it, on the single-core configuration `docs/validator-handbook.md` describes.
+2. **`PRAGMA busy_timeout` on a pool built by `connect_sqlite`** — read it back from a live connection rather than from `sqlx`'s source, which settles it for the version actually pinned.
 
-If (1) exceeds (2), the reviewer's chain to a failed snapshot commit and a process exit is real and
-the severity rises. If it does not, the finding is a CPU-profile and latency observation, which is
-where C-VAL-B put it.
+If (1) exceeds (2), the reviewer's chain to a failed snapshot commit and a process exit is real and the severity rises. If it does not, the finding is a CPU-profile and latency observation, which is where C-VAL-B put it.
 
-The second test the finding proposes — a concurrent snapshot commit and chunk registration on one
-pool, asserting both succeed — is worth writing regardless and is cheap. Note that
-[`poc/F-VAL-030-032-061/effect_failure.rs::reconciling_first_makes_the_same_effect_succeed`](../poc/F-VAL-030-032-061/effect_failure.rs)
-already performs a full 1024-nonce `register_nonces_chunk` through the real handler; whoever
-measures (1) should start there rather than building a new harness, and the fact that the test's
-runtime is a noticeable fraction of a second is itself the first data point.
+The second test the finding proposes — a concurrent snapshot commit and chunk registration on one pool, asserting both succeed — is worth writing regardless and is cheap. Note that [`poc/F-VAL-030-032-061/effect_failure.rs::reconciling_first_makes_the_same_effect_succeed`](../poc/F-VAL-030-032-061/effect_failure.rs) already performs a full 1024-nonce `register_nonces_chunk` through the real handler; whoever measures (1) should start there rather than building a new harness, and the fact that the test's runtime is a noticeable fraction of a second is itself the first data point.
 
 ### Remediation check
 
-**Option 1 (batch the inserts with `QueryBuilder::push_values`) is sound, is the fix, and its cost
-is genuinely low** — `QueryBuilder` is already imported in that file for `retain_groups`
-(`secrets/store.rs:33`, `:236-248`). Two things to specify: SQLite's default
-`SQLITE_MAX_VARIABLE_NUMBER` bounds a batch at a few hundred rows with three bindings each, so the
-"batches of a few hundred" in the option is a requirement rather than a suggestion; and the batching
-must stay inside the single transaction, or a crash mid-chunk leaves a `nonces_chunks` row with
-partial nonces — which would be a *new* defect of exactly the shape F-VAL-030 describes, since the
-root would be published with offsets missing.
+**Option 1 (batch the inserts with `QueryBuilder::push_values`) is sound, is the fix, and its cost is genuinely low** — `QueryBuilder` is already imported in that file for `retain_groups` (`secrets/store.rs:33`, `:236-248`). Two things to specify: SQLite's default `SQLITE_MAX_VARIABLE_NUMBER` bounds a batch at a few hundred rows with three bindings each, so the "batches of a few hundred" in the option is a requirement rather than a suggestion; and the batching must stay inside the single transaction, or a crash mid-chunk leaves a `nonces_chunks` row with partial nonces — which would be a _new_ defect of exactly the shape F-VAL-030 describes, since the root would be published with offsets missing.
 
-**Option 2 (bound the parallelism) is sound and the reasoning is right**: a chunk is amortised over
-1024 signatures, so throughput is not the constraint and predictability is. Prefer a dedicated
-`rayon::ThreadPool` over dropping `into_par_iter`, because the serial version on one worker thread
-per group still competes with the tokio runtime — it just does so for longer.
+**Option 2 (bound the parallelism) is sound and the reasoning is right**: a chunk is amortised over 1024 signatures, so throughput is not the constraint and predictability is. Prefer a dedicated `rayon::ThreadPool` over dropping `into_par_iter`, because the serial version on one worker thread per group still competes with the tokio runtime — it just does so for longer.
 
-**Option 3 (give the secret store its own pool or file) is sound and is the strongest of the four,
-and it also helps two other findings.** A separate connection removes the contention with the
-snapshot commit whose failure exits the process, and it removes the delete/insert interleaving that
-**F-VAL-066** depends on being able to happen. Its cost is that the secret store and the snapshot
-store stop being crash-atomic with each other — which matters for **F-VAL-033**, whose safety
-argument ("a restore rewinds state and secrets together, because they share one file") is *built on*
-them being one file. Taking option 3 therefore **invalidates F-VAL-033's benign case**: a restore
-would no longer rewind both, and a restored secret file against a current state file un-burns nonces
-with no reorg required. **Do not take option 3 without F-VAL-033 option 1 or 3 first.** That
-interaction is not noted anywhere in either finding and is the most important thing in this QA
-section.
+**Option 3 (give the secret store its own pool or file) is sound and is the strongest of the four, and it also helps two other findings.** A separate connection removes the contention with the snapshot commit whose failure exits the process, and it removes the delete/insert interleaving that **F-VAL-066** depends on being able to happen. Its cost is that the secret store and the snapshot store stop being crash-atomic with each other — which matters for **F-VAL-033**, whose safety argument ("a restore rewinds state and secrets together, because they share one file") is _built on_ them being one file. Taking option 3 therefore **invalidates F-VAL-033's benign case**: a restore would no longer rewind both, and a restored secret file against a current state file un-burns nonces with no reorg required. **Do not take option 3 without F-VAL-033 option 1 or 3 first.** That interaction is not noted anywhere in either finding and is the most important thing in this QA section.
 
-**Option 4 (set an explicit `busy_timeout` and journal mode in `connect_sqlite`) is sound and should
-be done regardless**, for the same reason as F-VAL-035 option 3: it makes the contention behaviour a
-property of this repository rather than of a dependency default. It also answers half of Q4
-permanently.
+**Option 4 (set an explicit `busy_timeout` and journal mode in `connect_sqlite`) is sound and should be done regardless**, for the same reason as F-VAL-035 option 3: it makes the contention behaviour a property of this repository rather than of a dependency default. It also answers half of Q4 permanently.
 
-**Severity.** Low is correct. I agree with C-VAL-B's exchange-rate argument — the attacker's lever
-costs a transaction per sequence and buys one chunk of CPU — and note that the eager background load
-is present with or without an attacker, which is what keeps this a robustness finding rather than a
-denial-of-service one.
+**Severity.** Low is correct. I agree with C-VAL-B's exchange-rate argument — the attacker's lever costs a transaction per sequence and buys one chunk of CPU — and note that the eager background load is present with or without an attacker, which is what keeps this a robustness finding rather than a denial-of-service one.
 
 ## Verification (V-VAL, Phase 5)
 
-**Partially settled. VAL-Q4's source-read half is answered; the finding's actual claim — duration —
-is not, and was not attempted.**
+**Partially settled. VAL-Q4's source-read half is answered; the finding's actual claim — duration — is not, and was not attempted.**
 
 ### What was measured
 
-`poc/V-VAL-dependency-questions/pragmas.rs`, against a pool built exactly as
-`crates/validator/src/main.rs:46` builds one:
+`poc/V-VAL-dependency-questions/pragmas.rs`, against a pool built exactly as `crates/validator/src/main.rs:46` builds one:
 
 ```
 foreign_keys = 1
@@ -398,37 +330,20 @@ locking_mode = normal
 pool max_connections = 10, min_connections = 0
 ```
 
-Confirmed against `sqlx-sqlite-0.9.0/src/options/mod.rs`: `busy_timeout: Duration::from_secs(5)`
-(line 203), and `journal_mode` deliberately left unset (lines 178-183 — "Don't set `journal_mode`
-unless the user requested it", because switching into or out of WAL needs an exclusive lock that
-`sqlite3_busy_timeout` cannot wait on).
+Confirmed against `sqlx-sqlite-0.9.0/src/options/mod.rs`: `busy_timeout: Duration::from_secs(5)` (line 203), and `journal_mode` deliberately left unset (lines 178-183 — "Don't set `journal_mode` unless the user requested it", because switching into or out of WAL needs an exclusive lock that `sqlite3_busy_timeout` cannot wait on).
 
 ### How this bears on the finding
 
 Two of the three readings cut **in the finding's favour**, one against:
 
-* **`journal_mode = delete`, i.e. WAL is not enabled.** This is the significant one and it was not
-  anticipated. Under the rollback journal a writer takes an EXCLUSIVE lock and blocks readers
-  outright for the duration of the transaction. WAL would have let the driver's reads proceed
-  concurrently with the 1025-statement nonce insert; it is not on. The contention mechanism this
-  finding describes is therefore *more* available than a WAL-based reading would suggest.
-* **`synchronous = 2` (FULL)** means an fsync per commit, lengthening the writer's hold.
-* **`busy_timeout = 5000`**, against the finding. A competing writer waits up to five seconds rather
-  than receiving `SQLITE_BUSY` immediately, so the step from "contention" to "the validator exits"
-  needs the transaction to exceed five seconds, not merely to overlap. That is a real bar and it is
-  not established here.
+- **`journal_mode = delete`, i.e. WAL is not enabled.** This is the significant one and it was not anticipated. Under the rollback journal a writer takes an EXCLUSIVE lock and blocks readers outright for the duration of the transaction. WAL would have let the driver's reads proceed concurrently with the 1025-statement nonce insert; it is not on. The contention mechanism this finding describes is therefore _more_ available than a WAL-based reading would suggest.
+- **`synchronous = 2` (FULL)** means an fsync per commit, lengthening the writer's hold.
+- **`busy_timeout = 5000`**, against the finding. A competing writer waits up to five seconds rather than receiving `SQLITE_BUSY` immediately, so the step from "contention" to "the validator exits" needs the transaction to exceed five seconds, not merely to overlap. That is a real bar and it is not established here.
 
-The same reading is what makes F-VAL-004's trigger A and F-XC-002's "cheapest transient error"
-plausible rather than certain: an `SQLITE_BUSY` requires a five-second stall, not a momentary one.
+The same reading is what makes F-VAL-004's trigger A and F-XC-002's "cheapest transient error" plausible rather than certain: an `SQLITE_BUSY` requires a five-second stall, not a momentary one.
 
 ### What was not done
 
-The finding's claim is about **duration** — how long `register_nonces_chunk` holds the writer with a
-real 1024-nonce chunk while the driver commits snapshots on the same pool. A source read gives the
-timeout but not the transaction length, and it is the ratio that decides the finding. That benchmark
-was not run: it needs the single-core deployment `docs/validator-handbook.md` describes, and this
-host is not it. VAL-Q9 (`rayon` global pool sizing under `taskset -c 0`) is unanswered for the same
-reason.
+The finding's claim is about **duration** — how long `register_nonces_chunk` holds the writer with a real 1024-nonce chunk while the driver commits snapshots on the same pool. A source read gives the timeout but not the transaction length, and it is the ratio that decides the finding. That benchmark was not run: it needs the single-core deployment `docs/validator-handbook.md` describes, and this host is not it. VAL-Q9 (`rayon` global pool sizing under `taskset -c 0`) is unanswered for the same reason.
 
-Certainty **45% → 55%**, severity **Low** unchanged. Status left as it was: this is not a
-verification, only a narrowing. The remaining gap is one benchmark, and it is the whole finding.
+Certainty **45% → 55%**, severity **Low** unchanged. Status left as it was: this is not a verification, only a narrowing. The remaining gap is one benchmark, and it is the whole finding.

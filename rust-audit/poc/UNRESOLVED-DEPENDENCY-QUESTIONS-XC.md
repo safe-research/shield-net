@@ -1,41 +1,19 @@
 # Unresolved questions — what a Rust toolchain would settle, in order
 
-> **Recovery copy (QA-XC).** This is the original `UNRESOLVED-DEPENDENCY-QUESTIONS.md` as written
-> by QA-XC, restored verbatim from the authoring agent's working context after the shared file was
-> overwritten by a concurrent write. Numbering is unchanged, so every `question N of
-> rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md` citation in the finding files still resolves.
-> Two additions by other agents (`Q-ENG-A`, and QA-CORE-SEN's extension of Q2) were lost in the
-> same event and are marked as placeholders below for their own authors to restore — I have not
-> attempted to reconstruct anyone else's text.
+> **Recovery copy (QA-XC).** This is the original `UNRESOLVED-DEPENDENCY-QUESTIONS.md` as written by QA-XC, restored verbatim from the authoring agent's working context after the shared file was overwritten by a concurrent write. Numbering is unchanged, so every `question N of rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md` citation in the finding files still resolves. Two additions by other agents (`Q-ENG-A`, and QA-CORE-SEN's extension of Q2) were lost in the same event and are marked as placeholders below for their own authors to restore — I have not attempted to reconstruct anyone else's text.
 
-Commit `2893917`. Compiled by **QA-XC** from the Coverage Critic's twenty-two toolchain-blocked
-questions (`rust-audit/state/coverage.md` §7) plus every open dependency question raised in a
-`## Critic` section, de-duplicated and re-ordered.
+Commit `2893917`. Compiled by **QA-XC** from the Coverage Critic's twenty-two toolchain-blocked questions (`rust-audit/state/coverage.md` §7) plus every open dependency question raised in a `## Critic` section, de-duplicated and re-ordered.
 
-**Why this file exists.** No Rust toolchain exists on the machine this audit ran on: no `cargo`,
-`rustc`, `forge`, `anvil` or `just`, and `~/.cargo/registry` does not exist, so no dependency
-source is on disk (`rust-audit/state/baseline.md` §1-2; assumption A9 is FALSE). `E1` was reached
-**zero times**, the whole audit is capped at **89%** certainty, and every finding below is short
-of its final number by exactly one of these answers.
+**Why this file exists.** No Rust toolchain exists on the machine this audit ran on: no `cargo`, `rustc`, `forge`, `anvil` or `just`, and `~/.cargo/registry` does not exist, so no dependency source is on disk (`rust-audit/state/baseline.md` §1-2; assumption A9 is FALSE). `E1` was reached **zero times**, the whole audit is capped at **89%** certainty, and every finding below is short of its final number by exactly one of these answers.
 
-**How to use it.** It is ordered by value-per-minute, not by finding ID or by severity. Work
-top-down and stop when the returns fall off — everything above the line marked *"diminishing
-returns begin here"* is worth doing on the first afternoon somebody has a toolchain; everything
-below it is worth doing before the next release.
+**How to use it.** It is ordered by value-per-minute, not by finding ID or by severity. Work top-down and stop when the returns fall off — everything above the line marked _"diminishing returns begin here"_ is worth doing on the first afternoon somebody has a toolchain; everything below it is worth doing before the next release.
 
 **Two standing disclaimers, stated once.**
 
-1. **No advisory status is asserted anywhere in this audit, and none may be.** `cargo audit` was
-   never run and no dependency source was ever read. Questions 9 and 21 below are "unknown, here
-   is how to find out" — they are *not* suspicions about any package, and nothing in this audit
-   should be quoted as a clean bill of health for the 516 locked packages either. Nobody looked,
-   because nobody could.
-2. **Nothing in this file was executed**, with the single exception of Q22, which needed only
-   `python3` and is marked **ANSWERED** with its output saved.
+1. **No advisory status is asserted anywhere in this audit, and none may be.** `cargo audit` was never run and no dependency source was ever read. Questions 9 and 21 below are "unknown, here is how to find out" — they are _not_ suspicions about any package, and nothing in this audit should be quoted as a clean bill of health for the 516 locked packages either. Nobody looked, because nobody could.
+2. **Nothing in this file was executed**, with the single exception of Q22, which needed only `python3` and is marked **ANSWERED** with its output saved.
 
-Certainty percentages are the values in the finding headers at the time this file was written;
-several findings were still being critiqued in parallel, so re-read the finding before quoting a
-number.
+Certainty percentages are the values in the finding headers at the time this file was written; several findings were still being critiqued in parallel, so re-read the finding before quoting a number.
 
 ---
 
@@ -63,22 +41,20 @@ number.
 | **17** | Which TLS root source does `reqwest` select under the pinned features? | 15 min | `F-XC-004` 85%, R10's O3 | `I` |
 | **18** | `reqwest`'s default redirect and proxy policy | 15 min | `F-XC-008` 80% (items 2-3) | `I` |
 | **19** | Does the linker strip the unused `sqlx-mysql`/`sqlx-postgres` code? | 30 min | `F-XC-007` 84% item 2 | `I` |
-| — | *diminishing returns begin here — the rest need something other than a toolchain* | | | |
+| — | _diminishing returns begin here — the rest need something other than a toolchain_ |  |  |  |
 | **20** | Are the eight MultiSend deployment addresses correct and complete? | 30 min + network | `F-ENG-006` 80%, `F-ENG-035` 80%, `F-ENG-037` 84%, `F-XC-052` 85% | not in this repo |
 | **21** | CoW / Safe contract semantics (`setPreSignature`, `GPv2VaultRelayer`, `createWithContext`, `handlePayment`) | hours + the contracts | `F-ENG-031` 85%, `F-ENG-037` 84%, `F-ENG-038` 78% | not in this repo |
 | **22** | Is the HKDF reference vector reproducible? | — | `F-CORE-038` | ✅ **ANSWERED — yes** |
 | **23** | Can the `sentinel-test-vectors` corpus be cloned and run? | hours + a team decision | every `F-ENG-*` | A8 unresolved |
-| **Q-ENG-A** | *(QA-ENG addendum — an unverifiable identifier, `Asserter::is_empty`, in F-ENG-032's PoC. Lost in the same overwrite; QA-ENG is restoring its own text.)* | — | `F-ENG-032` | placeholder |
+| **Q-ENG-A** | _(QA-ENG addendum — an unverifiable identifier, `Asserter::is_empty`, in F-ENG-032's PoC. Lost in the same overwrite; QA-ENG is restoring its own text.)_ | — | `F-ENG-032` | placeholder |
 
-**If you have ten minutes:** do #1. **If you have an hour:** #0, #1, #3, #5, #7, #8, #9 — seven
-answers, four findings re-scored, and the run's `E1` slot filled.
+**If you have ten minutes:** do #1. **If you have an hour:** #0, #1, #3, #5, #7, #8, #9 — seven answers, four findings re-scored, and the run's `E1` slot filled.
 
 ---
 
 ## 0. Does the workspace build, and does the existing suite pass?
 
-**Do this first.** Every experiment below assumes a green baseline; a red one changes what a
-failing PoC means.
+**Do this first.** Every experiment below assumes a green baseline; a red one changes what a failing PoC means.
 
 ```sh
 cargo build --workspace --all-targets --locked
@@ -86,13 +62,10 @@ cargo test --workspace
 cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
-The third is what `Justfile:22-30` and `.github/workflows/ci.yml:37-39` require of every PR, and
-nothing in this audit observed it. Save all three logs under `rust-audit/state/logs/`.
+The third is what `Justfile:22-30` and `.github/workflows/ci.yml:37-39` require of every PR, and nothing in this audit observed it. Save all three logs under `rust-audit/state/logs/`.
 
-- **All green** → the run's single unfilled Phase 0 `E1` slot is filled, and every PoC result
-  below is trustworthy.
-- **Anything red** → say so in the report before anything else. A finding derived from code that
-  does not compile as shipped is a different finding.
+- **All green** → the run's single unfilled Phase 0 `E1` slot is filled, and every PoC result below is trustworthy.
+- **Anything red** → say so in the report before anything else. A finding derived from code that does not compile as shipped is a different finding.
 
 **Effort:** 10 minutes, nearly all of it a cold `cargo build` of 516 packages.
 
@@ -100,25 +73,17 @@ nothing in this audit observed it. Save all three logs under `rust-audit/state/l
 
 ## 1. Does `frost-core` 3.0.0 redact secrets in `Debug`?
 
-**Unblocks:** `F-XC-002` (74%, Medium), `F-VAL-062` (60%), `F-CORE-036` (50%). Also VAL-H10.
-**Effort: 5 minutes.** The cheapest real evidence in this audit.
+**Unblocks:** `F-XC-002` (74%, Medium), `F-VAL-062` (60%), `F-CORE-036` (50%). Also VAL-H10. **Effort: 5 minutes.** The cheapest real evidence in this audit.
 
-This is **not** a source-reading exercise, and treating it as one is the mistake to avoid. C-VAL-B
-established that `KeyShare::dummy` already exists at
-`crates/validator/src/frost/keygen.rs:443-453`, so a one-line `format!("{:?}", …)` assertion
-decides it locally, without opening upstream at all — and, unlike a source read, the assertion
-keeps deciding it after every future dependency bump.
+This is **not** a source-reading exercise, and treating it as one is the mistake to avoid. C-VAL-B established that `KeyShare::dummy` already exists at `crates/validator/src/frost/keygen.rs:443-453`, so a one-line `format!("{:?}", …)` assertion decides it locally, without opening upstream at all — and, unlike a source read, the assertion keeps deciding it after every future dependency bump.
 
-**Run:** the ready test is at
-`rust-audit/poc/F-XC-002/append-to-crates-validator-src-frost-keygen.rs`. Append it to
-`crates/validator/src/frost/keygen.rs` and run:
+**Run:** the ready test is at `rust-audit/poc/F-XC-002/append-to-crates-validator-src-frost-keygen.rs`. Append it to `crates/validator/src/frost/keygen.rs` and run:
 
 ```sh
 cargo test -p validator qa_xc_002 -- --nocapture
 ```
 
-Or, if you want the answer in thirty seconds rather than five minutes, paste this into any
-`#[test]` in that file:
+Or, if you want the answer in thirty seconds rather than five minutes, paste this into any `#[test]` in that file:
 
 ```rust
 println!("{:?}", KeyShare::dummy());   // dummy's signing share is the scalar 1
@@ -131,39 +96,21 @@ println!("{:?}", KeyShare::dummy());   // dummy's signing share is the scalar 1
 | Redacted | `F-XC-002` and `F-VAL-062` → **Informational**. `F-CORE-036`'s separate workspace-contract half (core requires `Debug` on `Effect`/`Resume` and logs them at five sites, imposing no constraint on downstream types) stays **Low** on its own merits. |
 | Printed | `F-XC-002` / `F-VAL-062` → **Critical**. `crates/validator/src/service/effect.rs:249` formats the whole `Effect` with `tracing::warn!(?effect, %err, …)`, which the shipped `log_filter = "info"` emits, on any `try_perform_effect` error — and `Effect::ReconcileGroupSecrets` carries every live `Arc<KeyShare>`. A single SQLite write failure (a locked file during the backup `docs/validator-handbook.md:75` tells operators to take) writes FROST key shares to the log. That is PROMPT.md §8's first Critical bullet. |
 
-**The report must not present the current Medium as a measured midpoint.** It is a placeholder for
-an unanswered question that spans three severity bands, and the question costs five minutes.
+**The report must not present the current Medium as a measured midpoint.** It is a placeholder for an unanswered question that spans three severity bands, and the question costs five minutes.
 
-If you want the upstream read as well (you do not need it): after `cargo fetch`, look at
-`~/.cargo/registry/src/index.crates.io-*/frost-core-3.0.0/src/` for the `Debug` impl on
-`keys::SigningShare` (the value that must not print), `keys::KeyPackage` (reached by `KeyShare`'s
-newtype derive), `keys::dkg::round1::SecretPackage` (reached by `Secrets`' derive — check its
-`coefficients` field), and `keys::SecretShare`. Checksum `81ef2787af391c7e…`, `Cargo.lock:2089-2092`.
-Check whether the `internals` feature, which `crates/validator/Cargo.toml:9` enables, changes any
-of them.
+If you want the upstream read as well (you do not need it): after `cargo fetch`, look at `~/.cargo/registry/src/index.crates.io-*/frost-core-3.0.0/src/` for the `Debug` impl on `keys::SigningShare` (the value that must not print), `keys::KeyPackage` (reached by `KeyShare`'s newtype derive), `keys::dkg::round1::SecretPackage` (reached by `Secrets`' derive — check its `coefficients` field), and `keys::SecretShare`. Checksum `81ef2787af391c7e…`, `Cargo.lock:2089-2092`. Check whether the `internals` feature, which `crates/validator/Cargo.toml:9` enables, changes any of them.
 
 ---
 
 ## 2. Does `alloy-sol-types` 1.6.0 reject invalid UTF-8 in a `string` field?
 
-**Unblocks:** `F-SEN-013` (65%), whose severity is currently written as the conditional
-*"High if basis 8 holds, else Informational"*. **Effort: 15 minutes.**
+**Unblocks:** `F-SEN-013` (65%), whose severity is currently written as the conditional _"High if basis 8 holds, else Informational"_. **Effort: 15 minutes.**
 
-> *(QA-CORE-SEN appended to this question the source-read steps C-SEN asked for by name, plus a
-> warning that an `Ok` answer does **not** close `F-CORE-004`. That addendum was lost in the same
-> overwrite and QA-CORE-SEN is restoring its own text; this is a placeholder for it, not a
-> reconstruction.)*
+> _(QA-CORE-SEN appended to this question the source-read steps C-SEN asked for by name, plus a warning that an `Ok` answer does **not** close `F-CORE-004`. That addendum was lost in the same overwrite and QA-CORE-SEN is restoring its own text; this is a placeholder for it, not a reconstruction.)_
 
-The single biggest answer in this list. If `decode_raw_log` returns `Err` on non-UTF-8, then one
-`reveal` call by any active sentinel — an actor inside A2's fault bound — stalls **every**
-sentinel's *and* every validator's indexer permanently, not just the attacker's own:
+The single biggest answer in this list. If `decode_raw_log` returns `Err` on non-UTF-8, then one `reveal` call by any active sentinel — an actor inside A2's fault bound — stalls **every** sentinel's _and_ every validator's indexer permanently, not just the attacker's own:
 
-`E::decode_log(...).ok` discards the error (`crates/core/src/index/events.rs:546-554`), one
-`None` aborts the whole batch with `Error::DecodeLog` (`:495-516`), and the driver classifies
-every watcher error except `ExceededMaxReorgDepth` as transient and retries the same range every
-100 ms forever (`crates/core/src/driver.rs:206-225`). The log is a permanent feature of the
-canonical chain, so restarting does not help. Every sentinel with an outstanding commitment then
-fails to reveal and is slashed.
+`E::decode_log(...).ok` discards the error (`crates/core/src/index/events.rs:546-554`), one `None` aborts the whole batch with `Error::DecodeLog` (`:495-516`), and the driver classifies every watcher error except `ExceededMaxReorgDepth` as transient and retries the same range every 100 ms forever (`crates/core/src/driver.rs:206-225`). The log is a permanent feature of the canonical chain, so restarting does not help. Every sentinel with an outstanding commitment then fails to reveal and is slashed.
 
 **Run** — append to a `#[cfg(test)] mod tests` in `crates/sentinel/src/bindings.rs`:
 
@@ -204,13 +151,10 @@ cargo test -p sentinel qa_non_utf8_reason_decode -- --nocapture
 
 | Answer | Consequence |
 | --- | --- |
-| `Ok` (lossy, e.g. `String::from_utf8_lossy`) | `F-SEN-013` → **Informational**. The FSM never reads `event.reason` (`crates/sentinel/src/service.rs:335-385`), so replacement characters are harmless. The residual note — that one undecodable log of *any* kind poisons a whole batch and is then retried forever — stays worth recording. |
+| `Ok` (lossy, e.g. `String::from_utf8_lossy`) | `F-SEN-013` → **Informational**. The FSM never reads `event.reason` (`crates/sentinel/src/service.rs:335-385`), so replacement characters are harmless. The residual note — that one undecodable log of _any_ kind poisons a whole batch and is then retried forever — stays worth recording. |
 | `Err` | `F-SEN-013` → **High, Confirmed**, and it is the most serious liveness finding in the audit: a fleet-wide, unrecoverable stall for the price of one bond and one `reveal`. Remediation 2 (skip undecodable logs with a `warn` and a counter, rather than failing the batch) becomes urgent, and remediation 5 (alert on `safenet_core_block_number{status="processed"}` going flat) should ship with it. |
 
-**Do the same check for the other three `string` fields** in the same watched set —
-`DisputeResolved.context` and `DisputeOutOfScope.context` (`crates/sentinel/src/bindings.rs:41-43`)
-— since they come from the arbitrator rather than from a sentinel and would widen or narrow the
-trigger.
+**Do the same check for the other three `string` fields** in the same watched set — `DisputeResolved.context` and `DisputeOutOfScope.context` (`crates/sentinel/src/bindings.rs:41-43`) — since they come from the arbitrator rather than from a sentinel and would widen or narrow the trigger.
 
 ---
 
@@ -218,15 +162,9 @@ trigger.
 
 **Unblocks:** `F-XC-003` (58%), `F-VAL-063` (72%, its top-level-key leg). **Effort: 5 minutes.**
 
-A known library subtlety, and the repository is split on it: the engine has a
-`rejects_unknown_field` test (`crates/sentinel-engine/src/config.rs:129-144`) and is also the one
-config with **no** flattened field, so its green test proves nothing about the interaction. The
-validator and the sentinel both flatten and neither has such a test.
+A known library subtlety, and the repository is split on it: the engine has a `rejects_unknown_field` test (`crates/sentinel-engine/src/config.rs:129-144`) and is also the one config with **no** flattened field, so its green test proves nothing about the interaction. The validator and the sentinel both flatten and neither has such a test.
 
-One fact here needs no library knowledge at all: `core::driver::Config` — the struct everything
-flattened is routed into — is `#[serde(default)]` with **no** `deny_unknown_fields`
-(`crates/core/src/driver.rs:29-37`), unlike all five of its siblings in `core` (`tx/mod.rs:70`,
-`index/blocks.rs:48`, `index/mod.rs:21`, `index/events.rs:72`, `observability/mod.rs:17`).
+One fact here needs no library knowledge at all: `core::driver::Config` — the struct everything flattened is routed into — is `#[serde(default)]` with **no** `deny_unknown_fields` (`crates/core/src/driver.rs:29-37`), unlike all five of its siblings in `core` (`tx/mod.rs:70`, `index/blocks.rs:48`, `index/mod.rs:21`, `index/events.rs:72`, `observability/mod.rs:17`).
 
 **Run:** the six ready tests are in `rust-audit/poc/F-XC-003/`.
 
@@ -248,17 +186,11 @@ cargo test -p sentinel  config::tests::qa_xc_003
 
 ## 4. Can an un-timed `reqwest` request actually hang indefinitely?
 
-**Unblocks:** `F-ENG-005` (80%), `F-ENG-043` (74%), `F-CORE-011` (60%), `F-CORE-039` (55%) —
-four findings on one answer. **Effort: 10 minutes** (two `#[ignore]`d tests, 5 s each).
+**Unblocks:** `F-ENG-005` (80%), `F-ENG-043` (74%), `F-CORE-011` (60%), `F-CORE-039` (55%) — four findings on one answer. **Effort: 10 minutes** (two `#[ignore]`d tests, 5 s each).
 
-This is the premise that turns a mechanism into a stall. `CowChecker::new` builds a bare
-`reqwest::Client::new` with no request or connect timeout
-(`crates/sentinel-engine/src/checkers/cow.rs:228-231`); whether that can park forever is
-currently class `I` in four files.
+This is the premise that turns a mechanism into a stall. `CowChecker::new` builds a bare `reqwest::Client::new` with no request or connect timeout (`crates/sentinel-engine/src/checkers/cow.rs:228-231`); whether that can park forever is currently class `I` in four files.
 
-**Run:** `rust-audit/poc/F-XC-008/append-to-crates-sentinel-engine-src-checkers-cow.rs`, which
-drives the real private `ReqwestOrderApi` against a loopback listener that accepts and never
-answers, and includes the control case proving the proposed fix bounds it.
+**Run:** `rust-audit/poc/F-XC-008/append-to-crates-sentinel-engine-src-checkers-cow.rs`, which drives the real private `ReqwestOrderApi` against a loopback listener that accepts and never answers, and includes the control case proving the proposed fix bounds it.
 
 ```sh
 cargo test -p sentinel-engine qa_xc_008 -- --ignored --nocapture
@@ -278,24 +210,15 @@ cargo test -p sentinel-engine qa_xc_008 -- --ignored --nocapture
 
 **Unblocks:** `F-XC-051` (42%, Plausible), R4's Observation O4. **Effort: 10 minutes.**
 
-C-VAL-A's verdict on that finding ends with the same request in its own words: run
-`verify_commitment` against `c = []` and `c[0] = (0,0)` and record what `frost-core` actually
-does — "that single unreadable fact is doing all the work", and it decides between Low and High
-in one run.
+C-VAL-A's verdict on that finding ends with the same request in its own words: run `verify_commitment` against `c = []` and `c[0] = (0,0)` and record what `frost-core` actually does — "that single unreadable fact is doing all the work", and it decides between Low and High in one run.
 
 `verify_commitment` carries this comment (`crates/validator/src/frost/keygen.rs:83-86`):
 
-> `// Note that we do not check the length of the commitments, this is enforced by the smart`
-> `// contract and any issues will be caught later and produce an unexpected FROST error.`
+> `// Note that we do not check the length of the commitments, this is enforced by the smart` `// contract and any issues will be caught later and produce an unexpected FROST error.`
 
-The second clause is an unverified assertion about an upstream crate sitting inside a
-security-critical decoder, and `marshal::frost_commitment` maps over `commitment.c` with no length
-check (`crates/validator/src/frost/marshal.rs:105-121`). A panic on that path is caught nowhere —
-there is no `catch_unwind` in the driver, and the call site is a state-machine event handler
-(`crates/validator/src/state/keygen.rs:173`).
+The second clause is an unverified assertion about an upstream crate sitting inside a security-critical decoder, and `marshal::frost_commitment` maps over `commitment.c` with no length check (`crates/validator/src/frost/marshal.rs:105-121`). A panic on that path is caught nowhere — there is no `catch_unwind` in the driver, and the call site is a state-machine event handler (`crates/validator/src/state/keygen.rs:173`).
 
-**Run:** `rust-audit/poc/F-XC-051/append-to-crates-validator-src-frost-keygen.rs` — three cases:
-`c = []`, `c = [identity, identity]`, and `c` shorter than the threshold.
+**Run:** `rust-audit/poc/F-XC-051/append-to-crates-validator-src-frost-keygen.rs` — three cases: `c = []`, `c = [identity, identity]`, and `c` shorter than the threshold.
 
 ```sh
 cargo test -p validator qa_xc_051 -- --nocapture
@@ -315,11 +238,7 @@ cargo test -p validator qa_xc_051 -- --nocapture
 
 **Unblocks:** `F-XC-051` (42%), `F-VAL-001` (88%), `F-VAL-003` (80%). **Effort: 20 minutes.**
 
-A memory-exhaustion question under A2. `KeyGenCommitment.c` is a `Point[]` and
-`KeyGenSecretShare.f` is a `uint256[]` (`crates/validator/src/bindings.rs:63-76`), both arriving
-from event data that `F-VAL-060` argues is injectable. If the decoder allocates from the declared
-length prefix before checking it against the actual payload size, a log whose length prefix is
-`2^32` with a two-word payload is a cheap OOM against every validator that indexes it.
+A memory-exhaustion question under A2. `KeyGenCommitment.c` is a `Point[]` and `KeyGenSecretShare.f` is a `uint256[]` (`crates/validator/src/bindings.rs:63-76`), both arriving from event data that `F-VAL-060` argues is injectable. If the decoder allocates from the declared length prefix before checking it against the actual payload size, a log whose length prefix is `2^32` with a two-word payload is a cheap OOM against every validator that indexes it.
 
 **Run:**
 
@@ -337,8 +256,7 @@ fn qa_array_length_preallocation {
 }
 ```
 
-Watch RSS while it runs (`/usr/bin/time -v`, or run it under a `ulimit -v`). Escalate the declared
-length gradually — `2^20`, `2^32`, `2^68` — and record where, if anywhere, memory tracks it.
+Watch RSS while it runs (`/usr/bin/time -v`, or run it under a `ulimit -v`). Escalate the declared length gradually — `2^20`, `2^32`, `2^68` — and record where, if anywhere, memory tracks it.
 
 **What each answer implies:**
 
@@ -353,24 +271,16 @@ length gradually — `2^20`, `2^32`, `2^68` — and record where, if anywhere, m
 
 **Unblocks:** `F-XC-001` (66%, Informational). **Effort: 2 minutes.**
 
-The workspace has no `[profile.release]` anywhere (`grep -rn 'profile' Cargo.toml crates/*/Cargo.toml`
-→ no output; no `.cargo/`, no `rust-toolchain*`), and all three Dockerfiles build `--release`.
-The finding's remaining `I` leg is simply what that implies.
+The workspace has no `[profile.release]` anywhere (`grep -rn 'profile' Cargo.toml crates/*/Cargo.toml` → no output; no `.cargo/`, no `rust-toolchain*`), and all three Dockerfiles build `--release`. The finding's remaining `I` leg is simply what that implies.
 
 ```sh
 cargo build --release --workspace -v 2>&1 | grep -o "\-C debug-assertions=[a-z]*\|\-C overflow-checks=[a-z]*" | sort -u
 ```
 
-- **Confirms `overflow-checks = false` / `debug-assertions = false`** → `F-XC-001` stays
-  **Informational**: the two `debug_assert`s in the tree are dead in production, and the sweep in
-  its Critic section found no reachable arithmetic consequence. Remediation 1 (add
-  `overflow-checks = true`) remains worth doing as cheap insurance.
+- **Confirms `overflow-checks = false` / `debug-assertions = false`** → `F-XC-001` stays **Informational**: the two `debug_assert`s in the tree are dead in production, and the sweep in its Critic section found no reachable arithmetic consequence. Remediation 1 (add `overflow-checks = true`) remains worth doing as cheap insurance.
 - **Shows either enabled** → the finding is void; say so.
 
-Note the Critic's caution on remediation 3: `crates/validator/src/consensus/group.rs:236` sits on
-the epoch-rollover path, so promoting that `debug_assert!` to `assert!` would convert a
-theoretically-impossible condition into a validator crash. An `if`-guarded `tracing::error!` is
-the safe form.
+Note the Critic's caution on remediation 3: `crates/validator/src/consensus/group.rs:236` sits on the epoch-rollover path, so promoting that `debug_assert!` to `assert!` would convert a theoretically-impossible condition into a validator crash. An `if`-guarded `tracing::error!` is the safe form.
 
 ---
 
@@ -382,13 +292,7 @@ the safe form.
 cargo tree -d --workspace --locked
 ```
 
-The baseline's duplicate list was produced by a text parse of `Cargo.lock`, which cannot see
-feature-gated edges. C-XC re-read ten lockfile blocks by eye and found **zero** discrepancies, so
-the expectation is that this confirms the list — but it is two minutes and it either closes the
-caveat or finds the thing the parse could not see. The two facts that matter downstream are that
-the validator's `rand 0.8.6` and all three FROST crates sit on `rand_core 0.6.4` (so
-`keygen::setup` handing its `&mut R` to `dkg::part1` is type-compatible for the right reason), and
-that core's `sha2 0.11` reaches only `kdf.rs`.
+The baseline's duplicate list was produced by a text parse of `Cargo.lock`, which cannot see feature-gated edges. C-XC re-read ten lockfile blocks by eye and found **zero** discrepancies, so the expectation is that this confirms the list — but it is two minutes and it either closes the caveat or finds the thing the parse could not see. The two facts that matter downstream are that the validator's `rand 0.8.6` and all three FROST crates sit on `rand_core 0.6.4` (so `keygen::setup` handing its `&mut R` to `dkg::part1` is type-compatible for the right reason), and that core's `sha2 0.11` reaches only `kdf.rs`.
 
 ---
 
@@ -396,17 +300,9 @@ that core's `sha2 0.11` reaches only `kdf.rs`.
 
 **Unblocks:** `F-XC-007` (84%, Informational). **Effort: 5 minutes.**
 
-**Read the standing disclaimer at the top of this file before quoting this section.** No CVE, no
-RUSTSEC identifier and no claim about any pinned version appears anywhere in this audit.
-`F-XC-007`'s claim is about the *pipeline* — there is no advisory gate in
-`.github/workflows/ci.yml` or the `Justfile` — not about any package.
+**Read the standing disclaimer at the top of this file before quoting this section.** No CVE, no RUSTSEC identifier and no claim about any pinned version appears anywhere in this audit. `F-XC-007`'s claim is about the _pipeline_ — there is no advisory gate in `.github/workflows/ci.yml` or the `Justfile` — not about any package.
 
-I verified that independently, as instructed, because this is the file most likely to attract an
-advisory claim: `grep -n -i -E "RUSTSEC|CVE-|vulnerab|advisor|exploit|patched|yanked|unmaintained|outdated"`
-over `rust-audit/findings/F-XC-007.md` returns twelve lines, and every one is a process claim, an
-explicit disclaimer, a remediation proposal, or a subject-less hypothetical. **Confirmed clean.**
-The nearest approach is "rand 0.8 is a superseded line", which is a version-currency fact read off
-`Cargo.lock` and is immediately labelled "a maintenance fact, not a defect".
+I verified that independently, as instructed, because this is the file most likely to attract an advisory claim: `grep -n -i -E "RUSTSEC|CVE-|vulnerab|advisor|exploit|patched|yanked|unmaintained|outdated"` over `rust-audit/findings/F-XC-007.md` returns twelve lines, and every one is a process claim, an explicit disclaimer, a remediation proposal, or a subject-less hypothetical. **Confirmed clean.** The nearest approach is "rand 0.8 is a superseded line", which is a version-currency fact read off `Cargo.lock` and is immediately labelled "a maintenance fact, not a defect".
 
 ```sh
 cargo install cargo-audit --locked && cargo audit
@@ -414,12 +310,10 @@ cargo install cargo-audit --locked && cargo audit
 cargo install cargo-deny --locked && cargo deny check
 ```
 
-- **Clean** → record the date and the advisory-DB revision. That is the first advisory statement
-  this project can honestly make.
+- **Clean** → record the date and the advisory-DB revision. That is the first advisory statement this project can honestly make.
 - **Not clean** → a new finding per advisory, scored on reachability, not on the CVSS number.
 
-Either way, `F-XC-007` remediation 1 (add the gate to CI, scheduled daily as well as on PR, so it
-fires between releases) is the highest-value line in that Informational finding.
+Either way, `F-XC-007` remediation 1 (add the gate to CI, scheduled daily as well as on PR, so it fires between releases) is the highest-value line in that Informational finding.
 
 ---
 
@@ -427,11 +321,7 @@ fires between releases) is the highest-value line in that Informational finding.
 
 **Unblocks:** `F-ENG-008` (80%), R10's Observation 5. **Effort: 10 minutes.**
 
-The engine's two extractor rejections are `(StatusCode, &'static str)`
-(`crates/sentinel-engine/src/api/extractors.rs:22-25`, `:43-46`), but the statuses axum itself
-contributes (`415`, `422`, `413`, `405`, `404`) and their bodies are library behaviour. So is
-whether a panic in a handler yields *no response at all*, since `Cargo.toml:24` takes `tower-http`
-with only `["trace"]` and not `catch-panic`.
+The engine's two extractor rejections are `(StatusCode, &'static str)` (`crates/sentinel-engine/src/api/extractors.rs:22-25`, `:43-46`), but the statuses axum itself contributes (`415`, `422`, `413`, `405`, `404`) and their bodies are library behaviour. So is whether a panic in a handler yields _no response at all_, since `Cargo.toml:24` takes `tower-http` with only `["trace"]` and not `catch-panic`.
 
 ```sh
 cargo run -p sentinel-engine -- --config-file crates/sentinel-engine/sentinel-engine.sample.toml &
@@ -442,10 +332,7 @@ curl -sS -i -X GET  localhost:5473/v1/security-check
 curl -sS -i -X POST localhost:5473/v1/nonexistent
 ```
 
-Record the exact status and body of each. Under A3 the caller is the trusted co-deployed sentinel,
-so a leaked value fragment is Informational — but the documented API contract in
-`docs/sentinel-engine.md` should list every status the service can actually return, which is the
-substance of `F-ENG-008`.
+Record the exact status and body of each. Under A3 the caller is the trusted co-deployed sentinel, so a leaked value fragment is Informational — but the documented API contract in `docs/sentinel-engine.md` should list every status the service can actually return, which is the substance of `F-ENG-008`.
 
 ---
 
@@ -453,28 +340,17 @@ substance of `F-ENG-008`.
 
 **Unblocks:** `F-CORE-060` (82%). **Effort: 20 minutes.**
 
-`F-CORE-060`'s starting fee level currently comes from the tests' mocked `fee_history`, not from
-the real estimator, so the finding's arithmetic begins from a number nobody has observed. Point a
-test at a local `anvil` (Foundry 1.5.1 per A9) with an empty reward history and record both the
-`eth_feeHistory` request the estimator issues and the `max_fee_per_gas`/`max_priority_fee_per_gas`
-it returns.
+`F-CORE-060`'s starting fee level currently comes from the tests' mocked `fee_history`, not from the real estimator, so the finding's arithmetic begins from a number nobody has observed. Point a test at a local `anvil` (Foundry 1.5.1 per A9) with an empty reward history and record both the `eth_feeHistory` request the estimator issues and the `max_fee_per_gas`/`max_priority_fee_per_gas` it returns.
 
-- A high or unbounded starting level makes `F-CORE-060`'s cap-and-bump interaction worse than
-  filed; a conservative one makes it milder. Either way the finding's numbers should be re-derived
-  from the observed value rather than from the mock.
+- A high or unbounded starting level makes `F-CORE-060`'s cap-and-bump interaction worse than filed; a conservative one makes it milder. Either way the finding's numbers should be re-derived from the observed value rather than from the mock.
 
 ---
 
 ## 12. `sqlx` 0.9 SQLite defaults
 
-**Unblocks:** `F-VAL-035` (45%, the `ON DELETE CASCADE` leg / M6), R2's Observations O-6 and O-7.
-**Effort: 20 minutes.**
+**Unblocks:** `F-VAL-035` (45%, the `ON DELETE CASCADE` leg / M6), R2's Observations O-6 and O-7. **Effort: 20 minutes.**
 
-`connect_sqlite` sets only the two recycling knobs (`crates/core/src/utils.rs:56-62`). Everything
-else — `journal_mode`, `synchronous`, `busy_timeout`, `foreign_keys`, `create_if_missing`, pool
-size — is a library default, and **`foreign_keys` is the one that decides `F-VAL-035`**: SQLite
-does not enforce foreign keys unless `PRAGMA foreign_keys = ON` is issued per connection, so an
-`ON DELETE CASCADE` may be decorative.
+`connect_sqlite` sets only the two recycling knobs (`crates/core/src/utils.rs:56-62`). Everything else — `journal_mode`, `synchronous`, `busy_timeout`, `foreign_keys`, `create_if_missing`, pool size — is a library default, and **`foreign_keys` is the one that decides `F-VAL-035`**: SQLite does not enforce foreign keys unless `PRAGMA foreign_keys = ON` is issued per connection, so an `ON DELETE CASCADE` may be decorative.
 
 ```rust
 #[tokio::test]
@@ -487,86 +363,56 @@ async fn qa_sqlite_pragmas {
 }
 ```
 
-- **`foreign_keys = 0`** → `F-VAL-035`'s cascade leg is Confirmed and the fix is a one-line
-  connect option, applied to every service.
+- **`foreign_keys = 0`** → `F-VAL-035`'s cascade leg is Confirmed and the fix is a one-line connect option, applied to every service.
 - **`foreign_keys = 1`** → that leg closes; the rest of the finding stands or falls on its own.
-- `busy_timeout = 0` would additionally mean concurrent writers get `SQLITE_BUSY` immediately
-  rather than waiting, which is the mechanism behind several "a transient SQLite error" triggers
-  elsewhere in this audit — including `F-XC-002`'s.
+- `busy_timeout = 0` would additionally mean concurrent writers get `SQLITE_BUSY` immediately rather than waiting, which is the mechanism behind several "a transient SQLite error" triggers elsewhere in this audit — including `F-XC-002`'s.
 
 ---
 
 ## 13. Does `frost-core` reject a signing package whose commitments do not match the nonces?
 
-**Unblocks:** `F-VAL-034` (40%). **Effort: 15 minutes.** *Raised by C-VAL-B, not in the original
-twenty-two.*
+**Unblocks:** `F-VAL-034` (40%). **Effort: 15 minutes.** _Raised by C-VAL-B, not in the original twenty-two._
 
-`F-VAL-034` step 6 turns entirely on this: after a signing timeout rewrites a session, a late
-`Resume` can call `signature_share(key_share, nonces_from_session_1, revealed_from_session_2, m)`,
-and "`frost-core`'s own-commitment check is the only thing between this and a published share".
+`F-VAL-034` step 6 turns entirely on this: after a signing timeout rewrites a session, a late `Resume` can call `signature_share(key_share, nonces_from_session_1, revealed_from_session_2, m)`, and "`frost-core`'s own-commitment check is the only thing between this and a published share".
 
-Build two independent signing sessions in a unit test (the crate's own
-`crates/validator/src/frost/mod.rs:24+` ceremony test is the template), then cross them: pass
-session 1's nonces with session 2's revealed commitments.
+Build two independent signing sessions in a unit test (the crate's own `crates/validator/src/frost/mod.rs:24+` ceremony test is the template), then cross them: pass session 1's nonces with session 2's revealed commitments.
 
 - **`Err`** → `F-VAL-034` stays Low: the effect logs a warning and the ceremony is unaffected.
-- **`Ok`** → the validator queues an `Action::SignShare` whose `z` cannot satisfy onchain
-  verification, wasting a transaction and, more importantly, revealing that nothing local guards
-  the pairing. Re-score upward and take the finding's own remediation.
+- **`Ok`** → the validator queues an `Action::SignShare` whose `z` cannot satisfy onchain verification, wasting a transaction and, more importantly, revealing that nothing local guards the pairing. Re-score upward and take the finding's own remediation.
 
 ---
 
 ## 14. Can `round1::SigningNonces::new` panic on anything `NonceChunk::with_size` passes it?
 
-**Unblocks:** `F-VAL-031` (42%). **Effort: 15 minutes.** *Raised by C-VAL-B.*
+**Unblocks:** `F-VAL-031` (42%). **Effort: 15 minutes.** _Raised by C-VAL-B._
 
-C-VAL-B eliminated every other panic source in that path by inspection — the only `expect` is
-`offset.checked_add(1).expect("chunk too large")` with `offset < 1024`
-(`crates/validator/src/frost/preprocess.rs:117`), and `MerkleTree::build`/`proof` are total
-(`crates/validator/src/merkle.rs:21-22`, `:55`) — leaving `SigningNonces::new` as the sole
-unknown, class `I` under A6.
+C-VAL-B eliminated every other panic source in that path by inspection — the only `expect` is `offset.checked_add(1).expect("chunk too large")` with `offset < 1024` (`crates/validator/src/frost/preprocess.rs:117`), and `MerkleTree::build`/`proof` are total (`crates/validator/src/merkle.rs:21-22`, `:55`) — leaving `SigningNonces::new` as the sole unknown, class `I` under A6.
 
-Note that no untrusted input reaches this path, so the answer caps `F-VAL-031` at Low either way.
-Its real value is the *other* half of C-VAL-B's QA note, which needs no upstream knowledge and is
-the cheapest test in the validator crate: make a `Sampler::Custom` that panics
-(`crates/validator/src/secrets/nonces.rs:84-86` already exists for this), then assert that a
-subsequent `start` **replaces** the dead entry and that `next` succeeds. If it does not, the
-validator stops producing nonce chunks for the rest of the process lifetime after one worker
-death, with no metric distinguishing it.
+Note that no untrusted input reaches this path, so the answer caps `F-VAL-031` at Low either way. Its real value is the _other_ half of C-VAL-B's QA note, which needs no upstream knowledge and is the cheapest test in the validator crate: make a `Sampler::Custom` that panics (`crates/validator/src/secrets/nonces.rs:84-86` already exists for this), then assert that a subsequent `start` **replaces** the dead entry and that `next` succeeds. If it does not, the validator stops producing nonce chunks for the rest of the process lifetime after one worker death, with no metric distinguishing it.
 
 ---
 
 ## 15. Do `PrivateKeySigner` and k256's `SigningKey` zeroize on drop?
 
-**Unblocks:** R3's Observation O4; raises or lowers **every** secret-at-rest severity in the
-report. **Effort: 30 minutes, source reading.**
+**Unblocks:** R3's Observation O4; raises or lowers **every** secret-at-rest severity in the report. **Effort: 30 minutes, source reading.**
 
-Read, after `cargo fetch`: k256's `SigningKey` (does it hold a `SecretKey` with a `ZeroizeOnDrop`
-impl?), and alloy's `PrivateKeySigner`. Specifically whether `to_bytes` leaves an unzeroized
-intermediate — this codebase calls it, and a copy that outlives the source is what turns "the key
-is in memory" (unavoidable) into "the key is in freed memory" (avoidable).
+Read, after `cargo fetch`: k256's `SigningKey` (does it hold a `SecretKey` with a `ZeroizeOnDrop` impl?), and alloy's `PrivateKeySigner`. Specifically whether `to_bytes` leaves an unzeroized intermediate — this codebase calls it, and a copy that outlives the source is what turns "the key is in memory" (unavoidable) into "the key is in freed memory" (avoidable).
 
-Under A1 the operator and host are trusted, so no finding here becomes High on its own; the answer
-calibrates the severity language used across the secret-handling findings, which is why it is
-worth thirty minutes but not worth doing before anything above it.
+Under A1 the operator and host are trusted, so no finding here becomes High on its own; the answer calibrates the severity language used across the secret-handling findings, which is why it is worth thirty minutes but not worth doing before anything above it.
 
 ---
 
 ## 16. Five `alloy` 2.0.5 specifics R1 could not read
 
-**Unblocks:** `F-CORE-002` (85%), `F-CORE-010` (45%), `F-CORE-012` (70%), `F-CORE-065` (55%).
-**Effort: 45 minutes, source reading.**
+**Unblocks:** `F-CORE-002` (85%), `F-CORE-010` (45%), `F-CORE-012` (70%), `F-CORE-065` (55%). **Effort: 45 minutes, source reading.**
 
 1. How `Filter::at_block_hash` encodes — does it send `blockHash` or a `fromBlock`/`toBlock` pair?
 2. Is `EthRpcErrorCode::ResourceNotFound` really `-32001`?
 3. `logs_bloom` accumulation semantics on a reorged range.
-4. Exactly when `SolEventInterface::decode_raw_log` fails (this overlaps question 2 and should be
-   answered together with it).
+4. Exactly when `SolEventInterface::decode_raw_log` fails (this overlaps question 2 and should be answered together with it).
 5. Whether `ProviderCall::Ready` short-circuits every internal chain-id fetch, or only some.
 
-Four findings share the 45 minutes, but none of them is bimodal the way questions 1 and 2 are —
-each answer moves a certainty by ten or twenty points rather than across severity bands, which is
-why this sits here rather than higher.
+Four findings share the 45 minutes, but none of them is bimodal the way questions 1 and 2 are — each answer moves a certainty by ten or twenty points rather than across severity bands, which is why this sits here rather than higher.
 
 ---
 
@@ -574,20 +420,16 @@ why this sits here rather than higher.
 
 **Unblocks:** `F-XC-004` (85%), R10's Observation 3. **Effort: 15 minutes.**
 
-`Cargo.toml:15` pins exactly those features. The question is whether the images' `ca-certificates`
-package is load-bearing or dead weight — i.e. whether `reqwest` uses the OS trust store or a
-bundled `webpki-roots`.
+`Cargo.toml:15` pins exactly those features. The question is whether the images' `ca-certificates` package is load-bearing or dead weight — i.e. whether `reqwest` uses the OS trust store or a bundled `webpki-roots`.
 
 ```sh
 cargo tree -p reqwest -e features --locked | grep -i -E "rustls|webpki|native-tls|ca-cert"
 ```
 
-Then confirm empirically: run the engine image with `ca-certificates` removed and see whether an
-HTTPS RPC still connects.
+Then confirm empirically: run the engine image with `ca-certificates` removed and see whether an HTTPS RPC still connects.
 
 - **OS store** → `ca-certificates` is required, and removing it would be an outage. Document it.
-- **`webpki-roots`** → the package is dead weight *and* certificate roots are pinned at build time,
-  which is a supply-chain property the operator should know about (roots update only on rebuild).
+- **`webpki-roots`** → the package is dead weight _and_ certificate roots are pinned at build time, which is a supply-chain property the operator should know about (roots update only on rebuild).
 
 ---
 
@@ -595,15 +437,9 @@ HTTPS RPC still connects.
 
 **Unblocks:** `F-XC-008` (80%) items 2 and 3. **Effort: 15 minutes.**
 
-Two behaviours, both currently `I`: how many redirects a default client follows, and whether it
-honours `HTTP_PROXY`/`HTTPS_PROXY` from the environment. Test against a local listener that
-returns `301` in a loop, and against a client started with the proxy variables set to a listener
-that logs connections.
+Two behaviours, both currently `I`: how many redirects a default client follows, and whether it honours `HTTP_PROXY`/`HTTPS_PROXY` from the environment. Test against a local listener that returns `301` in a loop, and against a client started with the proxy variables set to a listener that logs connections.
 
-Under A1 and A3 both are Low — they need an environment or configuration change by the trusted
-operator — which is why this is below question 4 despite touching the same finding. Note the
-Critic's caution: do **not** hard-code `no_proxy` as the fix; an operator legitimately behind a
-corporate proxy would lose all CoW lookups.
+Under A1 and A3 both are Low — they need an environment or configuration change by the trusted operator — which is why this is below question 4 despite touching the same finding. Note the Critic's caution: do **not** hard-code `no_proxy` as the fix; an operator legitimately behind a corporate proxy would lose all CoW lookups.
 
 ---
 
@@ -611,9 +447,7 @@ corporate proxy would lose all CoW lookups.
 
 **Unblocks:** `F-XC-007` (84%) item 2. **Effort: 30 minutes.**
 
-`Cargo.toml:19` takes `sqlx` without `default-features = false`, so `Cargo.lock:4598-4609` pulls
-`sqlx-mysql` and `sqlx-postgres` into the build. Whether they reach the shipped binary decides
-whether remediation 2 is a real surface reduction or only a build-time saving.
+`Cargo.toml:19` takes `sqlx` without `default-features = false`, so `Cargo.lock:4598-4609` pulls `sqlx-mysql` and `sqlx-postgres` into the build. Whether they reach the shipped binary decides whether remediation 2 is a real surface reduction or only a build-time saving.
 
 ```sh
 cargo build --release --workspace --locked
@@ -622,65 +456,42 @@ ls -l target/release/{validator,sentinel,sentinel-engine}
 # then apply remediation 2 and compare both numbers
 ```
 
-C-XC already cleared the prerequisite: `grep -rn "FromRow\|derive(sqlx" crates/ --include='*.rs'`
-returns no match, so nothing uses the `macros` feature for derives and the change has no known
-code dependency. It still needs a build to confirm.
+C-XC already cleared the prerequisite: `grep -rn "FromRow\|derive(sqlx" crates/ --include='*.rs'` returns no match, so nothing uses the `macros` feature for derives and the change has no known code dependency. It still needs a build to confirm.
 
 ---
 
-## *Diminishing returns begin here.* The remaining questions need something a toolchain does not provide.
+## _Diminishing returns begin here._ The remaining questions need something a toolchain does not provide.
 
 ### 20. Are the eight MultiSend deployment addresses correct and complete?
 
-**Unblocks:** `F-ENG-006` (80%), `F-ENG-035` (80%), `F-ENG-037` (84%), `F-XC-052` (85%).
-**Effort: 30 minutes and network access. Needs no toolchain — and the contracts are not in this
-checkout** (R9: "`Safe.sol` is not in this checkout").
+**Unblocks:** `F-ENG-006` (80%), `F-ENG-035` (80%), `F-ENG-037` (84%), `F-XC-052` (85%). **Effort: 30 minutes and network access. Needs no toolchain — and the contracts are not in this checkout** (R9: "`Safe.sol` is not in this checkout").
 
-`crates/sentinel-engine/src/contracts/multi_send.rs:27-68` hard-codes eight canonical deployments
-with a `Legacy`/`V150Plus` wire-format tag and an `allows_delegate_calls` flag each. **A wrong or
-missing address means a batch is silently not recognised as a batch and every sub-call check is
-skipped** — `decode_multi_send_call` returns `None` and `sub_transactions` falls back to
-`vec![tx.clone]` (`multi_send.rs:165-171`), so the transaction is checked as an opaque
-delegatecall rather than as its constituent calls. That is a security-relevant miss, and it is
-silent by construction.
+`crates/sentinel-engine/src/contracts/multi_send.rs:27-68` hard-codes eight canonical deployments with a `Legacy`/`V150Plus` wire-format tag and an `allows_delegate_calls` flag each. **A wrong or missing address means a batch is silently not recognised as a batch and every sub-call check is skipped** — `decode_multi_send_call` returns `None` and `sub_transactions` falls back to `vec![tx.clone]` (`multi_send.rs:165-171`), so the transaction is checked as an opaque delegatecall rather than as its constituent calls. That is a security-relevant miss, and it is silent by construction.
 
-Check each of the eight against Safe's own deployment registry
-(`safe-global/safe-deployments`) for the target chain, and check the list for **omissions** as
-carefully as for errors:
+Check each of the eight against Safe's own deployment registry (`safe-global/safe-deployments`) for the target chain, and check the list for **omissions** as carefully as for errors:
 
-| Address | Tagged | Delegate calls |
-| --- | --- | --- |
-| `0x218543288004CD07832472D464648173c77D7eB7` | V150Plus | allowed |
-| `0xA83c336B20401Af773B6219BA5027174338D1836` | V150Plus | not allowed |
-| `0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526` | Legacy | allowed |
-| `0x9641d764fc13c8B624c04430C7356C1C7C8102e2` | Legacy | not allowed |
-| `0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761` | Legacy | allowed |
-| `0x40A2aCCbd92BCA938b02010E17A5b8929b49130D` | Legacy | not allowed |
-| `0x998739BFdAAdde7C933B942a68053933098f9EDa` | Legacy | allowed |
-| `0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B` | Legacy | not allowed |
+| Address                                      | Tagged   | Delegate calls |
+| -------------------------------------------- | -------- | -------------- |
+| `0x218543288004CD07832472D464648173c77D7eB7` | V150Plus | allowed        |
+| `0xA83c336B20401Af773B6219BA5027174338D1836` | V150Plus | not allowed    |
+| `0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526` | Legacy   | allowed        |
+| `0x9641d764fc13c8B624c04430C7356C1C7C8102e2` | Legacy   | not allowed    |
+| `0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761` | Legacy   | allowed        |
+| `0x40A2aCCbd92BCA938b02010E17A5b8929b49130D` | Legacy   | not allowed    |
+| `0x998739BFdAAdde7C933B942a68053933098f9EDa` | Legacy   | allowed        |
+| `0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B` | Legacy   | not allowed    |
 
-Three things to verify per row: that the address is a real MultiSend deployment on the deployment
-chain; that the `MultiSendCallOnly` variants are the ones tagged `allows_delegate_calls: false`
-and no other; and that the `Legacy` / `V150Plus` split matches where `to == address(0)` began to
-mean a self-call. A missing deployment (a chain-specific or newer release) is the failure mode
-that produces no error anywhere.
+Three things to verify per row: that the address is a real MultiSend deployment on the deployment chain; that the `MultiSendCallOnly` variants are the ones tagged `allows_delegate_calls: false` and no other; and that the `Legacy` / `V150Plus` split matches where `to == address(0)` began to mean a self-call. A missing deployment (a chain-specific or newer release) is the failure mode that produces no error anywhere.
 
 ### 21. CoW and Safe contract semantics
 
-**Unblocks:** `F-ENG-031` (85%), `F-ENG-037` (84%), `F-ENG-038` (78%). **Effort: hours; needs the
-contracts, which are not in this checkout.**
+**Unblocks:** `F-ENG-031` (85%), `F-ENG-037` (84%), `F-ENG-038` (78%). **Effort: hours; needs the contracts, which are not in this checkout.**
 
-`GPv2Signing.setPreSignature`, `GPv2VaultRelayer`, `ComposableCoW.createWithContext`, and Safe's
-`handlePayment` arithmetic. Under A7 the Solidity is the reference, so a Rust/Solidity mismatch is
-a Rust finding — but the Solidity has to be obtainable before the comparison can be made. Fetch
-the deployed sources for the target chain and re-derive each of the three findings' encoding
-claims against them.
+`GPv2Signing.setPreSignature`, `GPv2VaultRelayer`, `ComposableCoW.createWithContext`, and Safe's `handlePayment` arithmetic. Under A7 the Solidity is the reference, so a Rust/Solidity mismatch is a Rust finding — but the Solidity has to be obtainable before the comparison can be made. Fetch the deployed sources for the target chain and re-derive each of the three findings' encoding claims against them.
 
 ### 22. Is the HKDF reference vector reproducible? — ✅ **ANSWERED: yes**
 
-**This one needed no toolchain and has been settled.** C-CORE-B flagged that the reviewer declined
-to re-derive the vector at `crates/core/src/kdf.rs:36-46`; `python3` is present, and the vector's
-own doc comment says Python produced it originally.
+**This one needed no toolchain and has been settled.** C-CORE-B flagged that the reviewer declined to re-derive the vector at `crates/core/src/kdf.rs:36-46`; `python3` is present, and the vector's own doc comment says Python produced it originally.
 
 ```sh
 python3 rust-audit/poc/F-CORE-038/hkdf_reference_vector.py
@@ -688,15 +499,9 @@ python3 rust-audit/poc/F-CORE-038/hkdf_reference_vector.py
 # True
 ```
 
-RFC 5869 HKDF-SHA256 with `salt = b"safenet-sentinel-reveal-salt"`,
-`ikm = b"top secret key material"`, `info = b"request-1"`, `L = 32` reproduces the literal
-exactly. Script and output are saved under `rust-audit/poc/F-CORE-038/`.
+RFC 5869 HKDF-SHA256 with `salt = b"safenet-sentinel-reveal-salt"`, `ikm = b"top secret key material"`, `info = b"request-1"`, `L = 32` reproduces the literal exactly. Script and output are saved under `rust-audit/poc/F-CORE-038/`.
 
-**What it proves:** the vector is arithmetically correct and independently derived, so it is not a
-value copied from a previous run of the code under test. C-CORE-B's concern is closed.
-**What it does not prove:** that the Rust produces it — that still needs
-`cargo test -p safenet-core kdf::tests::derive_key_matches_reference_vector`, which is an ordinary
-green-suite check rather than an open question.
+**What it proves:** the vector is arithmetically correct and independently derived, so it is not a value copied from a previous run of the code under test. C-CORE-B's concern is closed. **What it does not prove:** that the Rust produces it — that still needs `cargo test -p safenet-core kdf::tests::derive_key_matches_reference_vector`, which is an ordinary green-suite check rather than an open question.
 
 **Do not repeat this one.** It is answered; the artefact is on disk.
 
@@ -704,34 +509,20 @@ green-suite check rather than an open question.
 
 **Unblocks:** every `F-ENG-*` finding. **Effort: hours, and it needs a decision, not a command.**
 
-Assumption **A8** is still "TEAM TO CONFIRM": the corpus is not available locally and nobody
-decided whether QA may clone it. This is the only route by which any checker finding reaches `E1`,
-so it is the single largest structural gap in the audit — but it is a permissions question first
-and a technical one second.
+Assumption **A8** is still "TEAM TO CONFIRM": the corpus is not available locally and nobody decided whether QA may clone it. This is the only route by which any checker finding reaches `E1`, so it is the single largest structural gap in the audit — but it is a permissions question first and a technical one second.
 
 ```sh
 just test-integration-sentinel-engine <path-to-corpus>
 ```
 
-### Q-ENG-A. *(QA-ENG addendum — placeholder)*
+### Q-ENG-A. _(QA-ENG addendum — placeholder)_
 
-QA-ENG contributed an entry here recording an unverifiable identifier, `Asserter::is_empty`, used
-in `F-ENG-032`'s PoC. It was lost in the same overwrite that destroyed this file. **QA-ENG is
-restoring its own text**; this heading exists so the slot and the label survive in the meantime. I
-have deliberately not reconstructed it — the point of the entry is a precise claim about an
-identifier, and guessing at someone else's precise claim is exactly the failure mode this audit
-marks `H`.
+QA-ENG contributed an entry here recording an unverifiable identifier, `Asserter::is_empty`, used in `F-ENG-032`'s PoC. It was lost in the same overwrite that destroyed this file. **QA-ENG is restoring its own text**; this heading exists so the slot and the label survive in the meantime. I have deliberately not reconstructed it — the point of the entry is a precise claim about an identifier, and guessing at someone else's precise claim is exactly the failure mode this audit marks `H`.
 
 ---
 
-## What is *not* on this list, and why
+## What is _not_ on this list, and why
 
 - **Anything about a specific package's security posture.** See the disclaimer at the top.
-- **`F-XC-004` (images run as root, no digest pin, discarded provenance argument), `F-XC-006`
-  (nothing binds a deployment to a chain), `F-XC-009` (sample-config placeholders).** These are
-  Confirmed on direct reads of files in this checkout and are not blocked on anything. They need
-  a decision, not an experiment. The suggested CI gate for `F-XC-004` — `docker inspect` asserting
-  a non-root `User` and a non-empty revision label — is the right shape and needs no answer from
-  this list.
-- **`F-XC-010` (the engine exports no metrics of its own).** Not blocked either; the PoC at
-  `rust-audit/poc/F-XC-010/` demonstrates it locally with no dependency question involved.
+- **`F-XC-004` (images run as root, no digest pin, discarded provenance argument), `F-XC-006` (nothing binds a deployment to a chain), `F-XC-009` (sample-config placeholders).** These are Confirmed on direct reads of files in this checkout and are not blocked on anything. They need a decision, not an experiment. The suggested CI gate for `F-XC-004` — `docker inspect` asserting a non-root `User` and a non-empty revision label — is the right shape and needs no answer from this list.
+- **`F-XC-010` (the engine exports no metrics of its own).** Not blocked either; the PoC at `rust-audit/poc/F-XC-010/` demonstrates it locally with no dependency question involved.

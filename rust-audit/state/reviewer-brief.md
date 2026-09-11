@@ -1,7 +1,6 @@
 # Shared brief — Phase 1 Reviewers (R1–R10)
 
-Repository root: `/home/shebin.guest/safe/safenet`. Commit `2893917` (`AI review changes`).
-This file is the Manager's standing brief. Your launch message adds only your assignment.
+Repository root: `/home/shebin.guest/safe/safenet`. Commit `2893917` (`AI review changes`). This file is the Manager's standing brief. Your launch message adds only your assignment.
 
 ## 1. Read before starting
 
@@ -22,9 +21,7 @@ There is **no Rust toolchain on this machine**: no `cargo`, `rustc`, `rustup`, `
 
 A1 trusted operator · A2 chain data adversarial within the <1/3 fault bound, Safe transaction contents fully attacker-controlled · A3 **engine API reachable only by its co-deployed sentinel** (missing auth/rate-limiting is Informational unless you find a bypass inside that deployment) · A4 **malicious RPC is OUT of scope**, but stale / rate-limited / incomplete `eth_getLogs` results are IN scope · A5 reorgs up to `max_reorg_depth` must be handled, deeper is a deliberate exit · A6 crypto libraries trusted — but their sources are **not on disk**, so any claim about `frost-core`/`alloy`/`sqlx`/`k256` internals is class `I`, never `E2` · A7 Solidity under `contracts/src` is the audited reference for hashing, encoding and protocol rules; a Rust/Solidity mismatch is a **Rust** finding · A10 Gnosis Chain ~5 s blocks, defaults `blocks_per_epoch` 1440, `key_gen_timeout` 120, `signing_timeout` 6, `oracle_timeout` 12, nonce chunk 1024, threshold n/2+1 · A11 scope is exactly PROMPT.md Section 4 · A12 the known TODOs in codebase-map Section 4 are **reported but tagged `known`** at reduced priority, never omitted · A13 no branches, no commits, no PRs.
 
-**A15 is TRUE this run.** The Safenet Arbitration Charter is available locally at
-`/tmp/claude-501/-home-shebin-guest-safe-safenet/166c992f-87ea-4548-be85-5fcf1c13bf90/scratchpad/safenet-charter/Safenet_Arbitration_Charter.md`
-(909 lines, upstream commit `44a1e53`, defining R-4.1 … R-4.6 — exactly the set `crates/sentinel-engine/src/engine/rule.rs` cites). R8 and R9: hold the checkers to this text and cite it as `safenet-charter@44a1e53:Safenet_Arbitration_Charter.md:<lines>` **with a verbatim quote**, because the path is session-local and will not survive.
+**A15 is TRUE this run.** The Safenet Arbitration Charter is available locally at `/tmp/claude-501/-home-shebin-guest-safe-safenet/166c992f-87ea-4548-be85-5fcf1c13bf90/scratchpad/safenet-charter/Safenet_Arbitration_Charter.md` (909 lines, upstream commit `44a1e53`, defining R-4.1 … R-4.6 — exactly the set `crates/sentinel-engine/src/engine/rule.rs` cites). R8 and R9: hold the checkers to this text and cite it as `safenet-charter@44a1e53:Safenet_Arbitration_Charter.md:<lines>` **with a verbatim quote**, because the path is session-local and will not survive.
 
 ## 4. Hard boundaries
 
@@ -41,6 +38,7 @@ A1 trusted operator · A2 chain data adversarial within the <1/3 fault bound, Sa
 Path `rust-audit/findings/F-<CRATE>-<nnn>.md`, using **your allocated ID range** (in your launch message) so parallel reviewers never collide. Use the template in PROMPT.md Section 8 exactly: the header table (Status `Draft`, crate/module, location, severity, certainty, assumptions, tags), then `## Claim`, `## Basis` (the per-claim table with class E1/E2/I, `path:line-range`, and a **verbatim quote of at most 15 lines**), `## Trigger`, `## Considered and rejected`, `## Remediation options`, `## Trail`.
 
 Rules that decide whether your finding survives Phase 2:
+
 - Every claim cites `path:line-range` **in this checkout** and quotes the real lines. Open the file and copy them; do not reproduce a quote from the analysis file without re-opening it. A citation that does not contain the quoted code is marked `H` by the Critic and sinks the finding.
 - `## Trigger` must give the concrete input, state or event sequence, or the literal words `none identified`.
 - `## Considered and rejected` must name the guards you actually checked, with citations, and say why this is not a false positive. A finding without this section is weak by construction.
@@ -51,6 +49,7 @@ Rules that decide whether your finding survives Phase 2:
 ### 5.2 Coverage log — `rust-audit/state/agents/R<n>.md`
 
 Write it as you go, not at the end. It must contain:
+
 - **Files read**: every assigned file with its `wc -l`, and whether you read 100% of it. If you did not finish a file, say so explicitly — an honest gap is worth more than a false claim of coverage. The Coverage Critic checks this against the canonical inventory.
 - **Commands run**: every command, verbatim.
 - **Hypotheses considered and rejected**: one entry per lead from the map/analysis and per idea of your own, each with the citation that refuted it. The Critic re-reads this list and promotes anything wrongly dismissed, so a lead you dismiss without a citation is a liability.

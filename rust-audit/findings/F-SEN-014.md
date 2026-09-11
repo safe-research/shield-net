@@ -1,14 +1,14 @@
 # F-SEN-014 Every participating sentinel submits `finalize` for every request, so all but one revert
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | Critiqued                                                                      |
-| Crate and module     | sentinel, service.rs                                                            |
-| Location             | crates/sentinel/src/service.rs:635-641 (related: 372-384, 450-465, 723-730)      |
-| Severity             | Informational / Informational                                                                  |
-| Certainty            | 88% (set by Critic C-SEN; QA may raise)                                      |
-| Assumptions involved | A10                                                                            |
-| Tags                 | dos                                                                             |
+| Field | Value |
+| --- | --- |
+| Status | Critiqued |
+| Crate and module | sentinel, service.rs |
+| Location | crates/sentinel/src/service.rs:635-641 (related: 372-384, 450-465, 723-730) |
+| Severity | Informational / Informational |
+| Certainty | 88% (set by Critic C-SEN; QA may raise) |
+| Assumptions involved | A10 |
+| Tags | dos |
 
 ## Claim
 
@@ -21,7 +21,7 @@ This is a known and arguably deliberate design (someone must call `finalize`, an
 ## Basis
 
 | # | Claim | Class (E1, E2, I) | Citation | Verbatim quote |
-| - | ----- | ----------------- | -------- | -------------- |
+| --- | --- | --- | --- | --- |
 | 1 | `Finalize` is emitted unconditionally on the non-drop paths | E2 | crates/sentinel/src/service.rs:629-641 | `        // If this sentinel did not participate and it was not a timeout`<br>`        // then no actions should be taken and the request should be dropped`<br>`        if !*self_revealed && !timed_out {`<br>`            return (None, Vec::new);`<br>`        }`<br>``<br>`        let mut actions = vec![`<br>`            SentinelAction {`<br>`                kind: SentinelActionKind::Finalize { id: request_id },`<br>`                expires_at: None,`<br>`            }`<br>`            .into,`<br>`        ];` |
 | 2 | The early-finalise trigger fires on a log every participant sees at the same time | E2 | crates/sentinel/src/service.rs:372-375 | `        if *revealed_count < *committed_count {`<br>`            return (state, Vec::new);`<br>`        }`<br>`        let (update, actions) = self.finalize(entry, event.requestId);` |
 | 3 | The deadline trigger fires on the same block for everyone | E2 | crates/sentinel/src/service.rs:450-457 | `            RequestState::CollectingVotes {`<br>`                reveal_deadline, ..`<br>`            } => {`<br>`                if block <= *reveal_deadline {`<br>`                    return true;`<br>`                }`<br>`                let (update, finalization) = self.finalize(entry, *id);`<br>`                actions.extend(finalization);` |
@@ -57,40 +57,21 @@ Tests to add: none required for the mechanism; an integration-script assertion c
 
 ### Per-claim verdicts
 
-All five rows re-opened; every quote is accurate and no claim is marked `H`
-(`service.rs:629-641`, `:372-375`, `:450-457`, `:723-730`,
-`SentinelOracleRequests.sol:174-177`). I confirmed independently that `Finalize` is constructed at
-exactly one site (`service.rs:636-640`) with `expires_at: None`, reached from both
-`handle_revealed`'s early trigger and `handle_block_advance`'s reveal-deadline branch, with no
-leader election, jitter or dedup anywhere in the crate.
+All five rows re-opened; every quote is accurate and no claim is marked `H` (`service.rs:629-641`, `:372-375`, `:450-457`, `:723-730`, `SentinelOracleRequests.sol:174-177`). I confirmed independently that `Finalize` is constructed at exactly one site (`service.rs:636-640`) with `expires_at: None`, reached from both `handle_revealed`'s early trigger and `handle_block_advance`'s reveal-deadline branch, with no leader election, jitter or dedup anywhere in the crate.
 
 ### Severity: Informational is right. Certainty: 95% is inadmissible
 
-Severity **Informational (unchanged)** — this is gas waste on a permissionless call that *someone*
-must make, and the finding says so honestly. It is a hardening item under Section 8, not a defect.
+Severity **Informational (unchanged)** — this is gas waste on a permissionless call that _someone_ must make, and the finding says so honestly. It is a hardening item under Section 8, not a defect.
 
-The self-estimate is the problem. **95% claims the 90-100 band, which requires `E1` reproduction —
-unreachable in this read-only run (no toolchain; the critic brief §2 sets a hard 89% ceiling).**
-Nothing here was executed. I am setting **88%**, at the top of the `E2` band, which is what a
-fully-cited, uncontested mechanism deserves. This is not a criticism of the analysis, which is
-correct; it is a correction of the scale.
+The self-estimate is the problem. **95% claims the 90-100 band, which requires `E1` reproduction — unreachable in this read-only run (no toolchain; the critic brief §2 sets a hard 89% ceiling).** Nothing here was executed. I am setting **88%**, at the top of the `E2` band, which is what a fully-cited, uncontested mechanism deserves. This is not a criticism of the analysis, which is correct; it is a correction of the scale.
 
-One factual nuance the report should carry: the two triggers do not fire equally. On the
-reveal-deadline path all `K` sentinels transition on the same block, so the herd is real and
-simultaneous. On the early-finalise path each sentinel fires on *its own* tally reaching
-`committed_count`, and F-SEN-002 shows those tallies diverge between sentinels — so in practice
-that path produces a staggered, partially self-limiting herd rather than a synchronised one. The
-cost claim is therefore sound but its upper bound (`K - 1` reverts every time) is the worst case,
-not the expected case.
+One factual nuance the report should carry: the two triggers do not fire equally. On the reveal-deadline path all `K` sentinels transition on the same block, so the herd is real and simultaneous. On the early-finalise path each sentinel fires on _its own_ tally reaching `committed_count`, and F-SEN-002 shows those tallies diverge between sentinels — so in practice that path produces a staggered, partially self-limiting herd rather than a synchronised one. The cost claim is therefore sound but its upper bound (`K - 1` reverts every time) is the worst case, not the expected case.
 
 ### Finding verdict
 
-**Confirmed. Certainty 88% (corrected down from the 95% self-estimate). Severity Informational
-(unchanged).**
+**Confirmed. Certainty 88% (corrected down from the 95% self-estimate). Severity Informational (unchanged).**
 
-Recommend remediation option 3 (simulate before broadcast) be carried in the report as the shared
-fix for this, F-SEN-006 and F-SEN-007 — one `eth_call` immediately before submission drops every
-would-revert transaction in all three findings at a single site (`core/tx/mod.rs:258-265`).
+Recommend remediation option 3 (simulate before broadcast) be carried in the report as the shared fix for this, F-SEN-006 and F-SEN-007 — one `eth_call` immediately before submission drops every would-revert transaction in all three findings at a single site (`core/tx/mod.rs:258-265`).
 
 ## QA (QA-CORE-SEN)
 
@@ -102,26 +83,13 @@ would-revert transaction in all three findings at a single site (`core/tx/mod.rs
 
 **Sound: option 3, which is the same change three other findings want.**
 
-Option 3 (`eth_call` immediately before broadcast, drop on revert) is the right fix and is
-**F-SEN-006 option 2** and **F-SEN-007 option 3**. One core change to `submit_transaction` closes
-this finding, the replay-duplicate waste, and the unaffordable-commit waste. For an Informational
-finding that is not a reason to prioritise it here, but it is a strong reason to prioritise the
-change, and the report should aggregate the three rather than listing it three times.
+Option 3 (`eth_call` immediately before broadcast, drop on revert) is the right fix and is **F-SEN-006 option 2** and **F-SEN-007 option 3**. One core change to `submit_transaction` closes this finding, the replay-duplicate waste, and the unaffordable-commit waste. For an Informational finding that is not a reason to prioritise it here, but it is a strong reason to prioritise the change, and the report should aggregate the three rather than listing it three times.
 
-Option 1 (stagger by `hash(request_id, self_address) mod K` blocks) is sound and its stated
-prerequisite is the interesting part: it needs a terminal event to cancel the pending action, and the
-finding correctly identifies that `OracleResult`, `DisputeTriggered` and `RequestTimedOut` are all
-emitted by `finalize` (`contracts/src/SentinelOracle.sol:268-283`) and **none is currently watched**.
-Adding `DisputeTriggered` is also **F-SEN-005 option 2**, so the event-set extension pays for itself
-twice. Without the cancellation the stagger only delays the herd, it does not thin it.
+Option 1 (stagger by `hash(request_id, self_address) mod K` blocks) is sound and its stated prerequisite is the interesting part: it needs a terminal event to cancel the pending action, and the finding correctly identifies that `OracleResult`, `DisputeTriggered` and `RequestTimedOut` are all emitted by `finalize` (`contracts/src/SentinelOracle.sol:268-283`) and **none is currently watched**. Adding `DisputeTriggered` is also **F-SEN-005 option 2**, so the event-set extension pays for itself twice. Without the cancellation the stagger only delays the herd, it does not thin it.
 
-Option 2 (emit `Finalize` only from the reveal-deadline branch, not the early-finalise one) is sound
-and nearly free, and it composes with **F-SEN-002 option 2**, which proposes removing the
-early-finalise path entirely for correctness reasons. If F-SEN-002 option 2 is taken in its
-"wait for `reveal_deadline`" form, this finding's herd halves as a side effect.
+Option 2 (emit `Finalize` only from the reveal-deadline branch, not the early-finalise one) is sound and nearly free, and it composes with **F-SEN-002 option 2**, which proposes removing the early-finalise path entirely for correctness reasons. If F-SEN-002 option 2 is taken in its "wait for `reveal_deadline`" form, this finding's herd halves as a side effect.
 
-Option 4 (a submitted-versus-successful `Finalize` counter) is the measurement that would tell an
-operator whether any of the above was worth doing.
+Option 4 (a submitted-versus-successful `Finalize` counter) is the measurement that would tell an operator whether any of the above was worth doing.
 
 ## Post-merge revalidation (RV-SEN)
 
@@ -138,18 +106,8 @@ Re-validated against merge commit `a7f3915` (baseline `2893917`).
 | `service.rs:450-465` (reveal-deadline branch) | `service.rs:450-465` | byte-identical |
 | `service.rs:723-730` (250,000 gas for `Finalize`) | `service.rs:868-875` | moved only |
 
-The set of sentinels that emit `Finalize` is unchanged: `finalize`'s guard is still
-`if !*self_revealed && !timed_out { return (None, Vec::new()); }` (`service.rs:633-637`), so every
-sentinel that revealed still submits one, on the same log or the same block. `SentinelOracle.finalize`
-still requires `prog.state == State.PENDING`, so `K - 1` still revert `RequestNotPending`, each
-burning a nonce, gas to the revert, and one of the sixteen in-flight slots.
+The set of sentinels that emit `Finalize` is unchanged: `finalize`'s guard is still `if !*self_revealed && !timed_out { return (None, Vec::new()); }` (`service.rs:633-637`), so every sentinel that revealed still submits one, on the same log or the same block. `SentinelOracle.finalize` still requires `prog.state == State.PENDING`, so `K - 1` still revert `RequestNotPending`, each burning a nonce, gas to the revert, and one of the sixteen in-flight slots.
 
-**What changed:** the `K - 1` losers no longer delete their tracked entry. `finalize` now returns
-`Some(RequestState::WaitingForOutcome { … })` (`service.rs:647-653`), so a losing finalizer keeps the
-request and is recovered by the winner's `DisputeTriggered` / `RequestTimedOut` / `OracleResult`
-(`service.rs:669-706`, `:723-753`, `:775-817`). That removes the collateral state loss but not the
-cost this finding is about — and it introduces a parking hazard, since `WaitingForOutcome` is never
-expired by `handle_block_advance` (`service.rs:466`) and no losing finalizer ever retries. See
-**F-SEN-005**.
+**What changed:** the `K - 1` losers no longer delete their tracked entry. `finalize` now returns `Some(RequestState::WaitingForOutcome { … })` (`service.rs:647-653`), so a losing finalizer keeps the request and is recovered by the winner's `DisputeTriggered` / `RequestTimedOut` / `OracleResult` (`service.rs:669-706`, `:723-753`, `:775-817`). That removes the collateral state loss but not the cost this finding is about — and it introduces a parking hazard, since `WaitingForOutcome` is never expired by `handle_block_advance` (`service.rs:466`) and no losing finalizer ever retries. See **F-SEN-005**.
 
 **Certainty 88% and severity Informational unchanged.** Status left at `Critiqued`.

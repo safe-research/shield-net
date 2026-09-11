@@ -1,14 +1,14 @@
 # F-VAL-036 `NonceState::observe` accepts a non-monotonic sequence and rewinds `next_sequence`, inflating the measured nonce capacity
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | QA-done                                                                       |
-| Crate and module     | validator, state/preprocess.rs                                                  |
-| Location             | crates/validator/src/state/preprocess.rs:174-194, 226-247 (related: crates/validator/src/state/sign.rs:30-34, crates/validator/src/state/mod.rs:415-463) |
-| Severity             | Low / Low                                                                       |
-| Certainty            | 40% (Critic C-VAL-B; QA may raise)                                              |
-| Assumptions involved | A2                                                                              |
-| Tags                 | input-validation                                                                |
+| Field | Value |
+| --- | --- |
+| Status | QA-done |
+| Crate and module | validator, state/preprocess.rs |
+| Location | crates/validator/src/state/preprocess.rs:174-194, 226-247 (related: crates/validator/src/state/sign.rs:30-34, crates/validator/src/state/mod.rs:415-463) |
+| Severity | Low / Low |
+| Certainty | 40% (Critic C-VAL-B; QA may raise) |
+| Assumptions involved | A2 |
+| Tags | input-validation |
 
 ## Claim
 
@@ -19,7 +19,7 @@ The damage is not the rewind itself but its interaction with `available`, which 
 ## Basis
 
 | # | Claim | Class | Citation | Verbatim quote |
-| - | ----- | ----- | -------- | -------------- |
+| --- | --- | --- | --- | --- |
 | 1 | The sequence is assigned, not maximised, and the same call prunes chunks based on the new value. | E2 | crates/validator/src/state/preprocess.rs:174-194 | excerpt 1 |
 | 2 | `available` derives the current chunk's remaining capacity from `next_sequence`'s offset, so a lower offset over-reports. | E2 | crates/validator/src/state/preprocess.rs:234-247 | excerpt 2 |
 | 3 | `expected_chunk` also reads `next_sequence`, so a rewind can lower the chunk index a reservation would target. | E2 | crates/validator/src/state/preprocess.rs:222-232 | excerpt 3 |
@@ -53,6 +53,7 @@ impl NonceState {
         nonce
     }
 ```
+
 **`crates/validator/src/state/preprocess.rs:234-247`**
 
 ```rust
@@ -71,6 +72,7 @@ impl NonceState {
             .sum
     }
 ```
+
 **`crates/validator/src/state/preprocess.rs:222-232`**
 
 ```rust
@@ -86,6 +88,7 @@ impl NonceState {
         }
     }
 ```
+
 **`crates/validator/src/state/sign.rs:30-35`**
 
 ```rust
@@ -96,6 +99,7 @@ impl NonceState {
             .and_then(|epoch| epoch.nonces.observe(event.sequence));
         match (nonce, state.signing.remove(&event.message)) {
 ```
+
 **`contracts/src/FROSTCoordinator.sol:530-542`**
 
 ```solidity
@@ -148,56 +152,29 @@ Derived from `state/preprocess.rs:174-247` and `state/sign.rs:30-35` before read
 
 ### Per-claim verdicts
 
-All five basis rows **Supported**; every quote matches. `observe` really does assign
-(`self.next_sequence = sequence.saturating_add(1)`, `preprocess.rs:189`) rather than take a maximum,
-and it really is evaluated before any authorisation of the event (`sign.rs:30-34`, inside the `match`
-scrutinee). `FROSTCoordinator.sol:536`'s `state.sequence++` really is the strictly-increasing
-invariant the Rust side declines to assert. No `H` claims.
+All five basis rows **Supported**; every quote matches. `observe` really does assign (`self.next_sequence = sequence.saturating_add(1)`, `preprocess.rs:189`) rather than take a maximum, and it really is evaluated before any authorisation of the event (`sign.rs:30-34`, inside the `match` scrutinee). `FROSTCoordinator.sol:536`'s `state.sequence++` really is the strictly-increasing invariant the Rust side declines to assert. No `H` claims.
 
 ### Independent check of reachability - I agree with the reviewer's own honesty about it
 
 I looked for an honest-chain path to a non-monotonic `sequence` and found none:
 
-- Log delivery is strictly ordered and duplicate-free: `handle_update` rejects any batch that is not
-  `is_sorted_by(|a, b| (a.block, a.index) < (b.block, b.index))` with `Error::BadUpdate`
-  (`core/state/mod.rs:207-211`), and `is_next_in_range` forces successive batches to advance
-  (`:278-281`).
-- A reorg rewinds `State` and the chain together (`core/state/mod.rs:182-189`), so the rolled-back
-  `next_sequence` and the replayed sequences stay consistent.
-- Per-group isolation holds: `handle_sign` selects the epoch by `group.id == event.gid`
-  (`sign.rs:33`), and group ids embed the epoch number through `group_context`
-  (`consensus/group.rs:201`, `:268-277`), so two tracked epochs cannot share one `NonceState`.
+- Log delivery is strictly ordered and duplicate-free: `handle_update` rejects any batch that is not `is_sorted_by(|a, b| (a.block, a.index) < (b.block, b.index))` with `Error::BadUpdate` (`core/state/mod.rs:207-211`), and `is_next_in_range` forces successive batches to advance (`:278-281`).
+- A reorg rewinds `State` and the chain together (`core/state/mod.rs:182-189`), so the rolled-back `next_sequence` and the replayed sequences stay consistent.
+- Per-group isolation holds: `handle_sign` selects the epoch by `group.id == event.gid` (`sign.rs:33`), and group ids embed the epoch number through `group_context` (`consensus/group.rs:201`, `:268-277`), so two tracked epochs cannot share one `NonceState`.
 
-So the arithmetic defect is real and unconditional, but on the honest chain it is unreachable, and
-its only route to reachability is F-VAL-060's injectable watched address. The reviewer labels this
-correctly ("`E2` for the missing bound and the arithmetic; `I` for exploitability, because it
-inherits VAL-H2's precondition"). That is the right call and I am not going to reward it with a
-number the precondition cannot support.
+So the arithmetic defect is real and unconditional, but on the honest chain it is unreachable, and its only route to reachability is F-VAL-060's injectable watched address. The reviewer labels this correctly ("`E2` for the missing bound and the arithmetic; `I` for exploitability, because it inherits VAL-H2's precondition"). That is the right call and I am not going to reward it with a number the precondition cannot support.
 
 ### Finding verdict
 
-**Plausible - 40%.** The mechanism is `E2` and the worked arithmetic in the Trigger is correct - I
-recomputed it: at sequence 8000 (chunk 7, offset 832) `available` is `1024-832 = 192`; one injected
-`Sign` at 7168 sets `next_sequence = 7169` (chunk 7, offset 1) and `available` becomes 1023. The
-trigger is inherited wholesale from F-VAL-060, which I have settled at 50% (see my section there),
-and a finding cannot outrank its own precondition. 40 rather than 45 because the *incremental* harm
-over F-VAL-060 is small - anything that can inject a `Sign` log already holds the far stronger
-primitives F-VAL-060 enumerates.
+**Plausible - 40%.** The mechanism is `E2` and the worked arithmetic in the Trigger is correct - I recomputed it: at sequence 8000 (chunk 7, offset 832) `available` is `1024-832 = 192`; one injected `Sign` at 7168 sets `next_sequence = 7169` (chunk 7, offset 1) and `available` becomes 1023. The trigger is inherited wholesale from F-VAL-060, which I have settled at 50% (see my section there), and a finding cannot outrank its own precondition. 40 rather than 45 because the _incremental_ harm over F-VAL-060 is small - anything that can inject a `Sign` log already holds the far stronger primitives F-VAL-060 enumerates.
 
-**Severity: Low (unchanged).** Correct. The consequence is the same silent non-participation as
-F-VAL-030, reached only through a precondition that already grants worse.
+**Severity: Low (unchanged).** Correct. The consequence is the same silent non-participation as F-VAL-030, reached only through a precondition that already grants worse.
 
-**Remediation note.** The one-line fix
-(`self.next_sequence = self.next_sequence.max(sequence.saturating_add(1))`) is worth taking on its
-own merits and independently of F-VAL-060, because it converts a state variable that must be
-monotonic into one that provably is; pair it with a `debug_assert!` so a future non-monotonic input
-is loud rather than silent.
+**Remediation note.** The one-line fix (`self.next_sequence = self.next_sequence.max(sequence.saturating_add(1))`) is worth taking on its own merits and independently of F-VAL-060, because it converts a state variable that must be monotonic into one that provably is; pair it with a `debug_assert!` so a future non-monotonic input is loud rather than silent.
 
 ## QA (QA-VAL)
 
-**Outcome: Not attempted (no toolchain).** Certainty unchanged at **40%**; severity Low unchanged.
-No PoC directory — the finding's precondition is F-VAL-060, which C-VAL-B settled at 50%, and a
-finding cannot outrank its own precondition.
+**Outcome: Not attempted (no toolchain).** Certainty unchanged at **40%**; severity Low unchanged. No PoC directory — the finding's precondition is F-VAL-060, which C-VAL-B settled at 50%, and a finding cannot outrank its own precondition.
 
 ### What would be run, and what it would show
 
@@ -215,50 +192,25 @@ fn observe_is_monotonic {
 }
 ```
 
-I re-derived C-VAL-B's arithmetic independently and it is right: sequence 8000 is chunk 7 offset
-832, so `available` is `1024 - 832 = 192`; one `Sign` at 7168 sets `next_sequence = 7169`
-(chunk 7, offset 1) and `available` becomes 1023. Running that test is `E1` for the mechanism.
-It would **not** raise the certainty, because the certainty here is bounded by the precondition and
-not by the mechanism — the same point C-VAL-B makes, and it is worth restating so a green test is
-not mistaken for a settled finding.
+I re-derived C-VAL-B's arithmetic independently and it is right: sequence 8000 is chunk 7 offset 832, so `available` is `1024 - 832 = 192`; one `Sign` at 7168 sets `next_sequence = 7169` (chunk 7, offset 1) and `available` becomes 1023. Running that test is `E1` for the mechanism. It would **not** raise the certainty, because the certainty here is bounded by the precondition and not by the mechanism — the same point C-VAL-B makes, and it is worth restating so a green test is not mistaken for a settled finding.
 
-Note the test as written needs `NonceState`'s fields and `available` reachable, which means it
-must live in `crate::state` (fields are private to that module) and `available` must become
-`pub(super)` — it is a plain private `fn` today (`state/preprocess.rs:235`). Say that in the ticket;
-it is the only reason this test does not already exist.
+Note the test as written needs `NonceState`'s fields and `available` reachable, which means it must live in `crate::state` (fields are private to that module) and `available` must become `pub(super)` — it is a plain private `fn` today (`state/preprocess.rs:235`). Say that in the ticket; it is the only reason this test does not already exist.
 
 ### Remediation check
 
-**Option 1 is sound and is two one-line changes, and I would take it independently of F-VAL-060.**
-`self.next_sequence = self.next_sequence.max(sequence.saturating_add(1))` plus an early
-`if sequence < self.next_sequence { return None; }`. The argument for doing it regardless of the
-precondition is the one C-VAL-B gives and it is the right one: it converts a state variable that
-*must* be monotonic into one that provably is, which removes a whole class of future reasoning
-rather than patching one path. Add the `debug_assert!` C-VAL-B suggests so a non-monotonic input is
-loud in tests and silent in production.
+**Option 1 is sound and is two one-line changes, and I would take it independently of F-VAL-060.** `self.next_sequence = self.next_sequence.max(sequence.saturating_add(1))` plus an early `if sequence < self.next_sequence { return None; }`. The argument for doing it regardless of the precondition is the one C-VAL-B gives and it is the right one: it converts a state variable that _must_ be monotonic into one that provably is, which removes a whole class of future reasoning rather than patching one path. Add the `debug_assert!` C-VAL-B suggests so a non-monotonic input is loud in tests and silent in production.
 
-One thing the option does not say: the early return must come **before** the `split_off`, or a stale
-sequence still prunes chunks it should not. Written in the order the option gives (assignment first,
-then return) it would be wrong; written as "return early, then assign" it is right. That ordering is
-the entire fix and should be explicit in the ticket.
+One thing the option does not say: the early return must come **before** the `split_off`, or a stale sequence still prunes chunks it should not. Written in the order the option gives (assignment first, then return) it would be wrong; written as "return early, then assign" it is right. That ordering is the entire fix and should be explicit in the ticket.
 
-**Option 2 (`warn!` on a below-watermark sequence) is sound and cheap**, and it is the only part
-that would have surfaced this condition in a running system. On an honest chain it never fires.
+**Option 2 (`warn!` on a below-watermark sequence) is sound and cheap**, and it is the only part that would have surfaced this condition in a running system. On an honest chain it never fires.
 
-**Option 3 (bind coordinator events to the coordinator address) is F-VAL-060's remediation and is
-correctly cross-referenced rather than duplicated.** It removes the trigger; option 1 removes the
-mechanism. Both are worth having, and neither substitutes for the other — which is the right way for
-this finding to be reported alongside its precondition.
+**Option 3 (bind coordinator events to the coordinator address) is F-VAL-060's remediation and is correctly cross-referenced rather than duplicated.** It removes the trigger; option 1 removes the mechanism. Both are worth having, and neither substitutes for the other — which is the right way for this finding to be reported alongside its precondition.
 
 ## Post-merge revalidation (RV-VAL)
 
-**Verdict: STILL VALID.** Certainty and severity unchanged. Merge commit `a7f3915`, which merges
-`origin/main` and the Certora FROST audit fixes I-01..I-09. `crates/validator` is untouched by
-the merge, so this finding's mechanism is byte-identical.
+**Verdict: STILL VALID.** Certainty and severity unchanged. Merge commit `a7f3915`, which merges `origin/main` and the Certora FROST audit fixes I-01..I-09. `crates/validator` is untouched by the merge, so this finding's mechanism is byte-identical.
 
-The merge shifts `contracts/src/FROSTCoordinator.sol` by two documentation-only hunks
-(`9e41b49`: NatSpec on the `SignShared` event and on `signShare`). Every function this file
-quotes is byte-identical — only its address moved. Corrected citations:
+The merge shifts `contracts/src/FROSTCoordinator.sol` by two documentation-only hunks (`9e41b49`: NatSpec on the `SignShared` event and on `signShare`). Every function this file quotes is byte-identical — only its address moved. Corrected citations:
 
 | Old | New |
 | --- | --- |

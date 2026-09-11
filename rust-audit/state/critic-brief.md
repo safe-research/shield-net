@@ -1,7 +1,6 @@
 # Shared brief — Phase 2 Critics
 
-Repository root: `/home/shebin.guest/safe/safenet`. Commit `2893917`.
-Your job is **falsification**, not endorsement. A Critic who confirms everything has done nothing.
+Repository root: `/home/shebin.guest/safe/safenet`. Commit `2893917`. Your job is **falsification**, not endorsement. A Critic who confirms everything has done nothing.
 
 ## 1. Read before starting
 
@@ -22,7 +21,7 @@ For each finding assigned to you, in this order:
 
 1. Read **only its title and `Location`**. Do not read the reviewer's reasoning yet.
 2. Open the cited code yourself and work out what it does and whether anything is wrong with it. Write down your own view.
-3. *Then* read the reviewer's `## Claim`, `## Basis`, `## Trigger` and `## Considered and rejected`, and compare against what you derived.
+3. _Then_ read the reviewer's `## Claim`, `## Basis`, `## Trigger` and `## Considered and rejected`, and compare against what you derived.
 
 This ordering is the point of the role. Reading the reviewer's argument first makes you its editor rather than its adversary.
 
@@ -44,7 +43,7 @@ Then a **finding verdict**:
 
 Set the certainty number yourself using PROMPT.md Section 8's rubric — **do not inherit the reviewer's self-estimate**, and do not split the difference to be polite. Anything you land below 40 is not a finding: say so, and it moves to the unverified-observations list.
 
-**Also re-judge severity** against Section 8's scale for *this* system. Severity inflation is the most common defect in this kind of report: a panic that no untrusted input can reach is Low or Informational however alarming it looks; a stall that an attacker can trigger deliberately is High. Where the reviewer's severity is wrong, state the corrected one and why. Check too that the finding respects the confirmed assumptions — under **A1** "the operator can read the key file on disk" is not a finding; under **A3** missing engine auth or rate limiting is Informational absent a bypass inside the deployment; under **A4** "a malicious RPC could lie" is out of scope, while "a stale, rate-limited or incomplete RPC response" is in scope; under **A7** a Rust/Solidity mismatch is a **Rust** finding.
+**Also re-judge severity** against Section 8's scale for _this_ system. Severity inflation is the most common defect in this kind of report: a panic that no untrusted input can reach is Low or Informational however alarming it looks; a stall that an attacker can trigger deliberately is High. Where the reviewer's severity is wrong, state the corrected one and why. Check too that the finding respects the confirmed assumptions — under **A1** "the operator can read the key file on disk" is not a finding; under **A3** missing engine auth or rate limiting is Informational absent a bypass inside the deployment; under **A4** "a malicious RPC could lie" is out of scope, while "a stale, rate-limited or incomplete RPC response" is in scope; under **A7** a Rust/Solidity mismatch is a **Rust** finding.
 
 ## 5. Mine the rejected hypotheses — this is half your value
 

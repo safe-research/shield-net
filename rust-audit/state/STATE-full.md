@@ -1,42 +1,41 @@
 # Audit state
 
-| Field       | Value                                                                 |
-| ----------- | --------------------------------------------------------------------- |
-| Commit      | 2893917757ae518ebb91154712cf3e401cb68d33 (`AI review changes`)         |
-| Started     |                                                            |
-| Mode        | phases 0-4 read-only; **phase 5 executing** (toolchain installed) |
-| Phase       | **COMPLETE** - 8 phases; findings validated end-to-end on local Anvil |
-| Gate status | **CLOSED - run finished; 8 phases, report signed off**                |
+| Field | Value |
+| --- | --- |
+| Commit | 2893917757ae518ebb91154712cf3e401cb68d33 (`AI review changes`) |
+| Started |  |
+| Mode | phases 0-4 read-only; **phase 5 executing** (toolchain installed) |
+| Phase | **COMPLETE** - 8 phases; findings validated end-to-end on local Anvil |
+| Gate status | **CLOSED - run finished; 8 phases, report signed off** |
 
-Runtime: Claude Code, Claude Opus 5 (1M context), Agent-tool subagents, no Workflow.
-Operator instruction: run the prompt; **no commits, no branches, no PRs**.
+Runtime: Claude Code, Claude Opus 5 (1M context), Agent-tool subagents, no Workflow. Operator instruction: run the prompt; **no commits, no branches, no PRs**.
 
 ## Assumptions confirmed
 
 All fifteen signed off at Gate 0 on (operator answers recorded below). A8 and A9 are forced FALSE by the environment.
 
-| ID  | State | Note |
-| --- | ----- | ---- |
-| A1  | [x] TRUE            | Trusted operator; plaintext secrets at rest documented in `docs/validator-handbook.md`. |
-| A2  | [x] TRUE            | Adversarial chain data within the <1/3 fault bound; Safe tx contents attacker-controlled. |
-| A3  | [x] TRUE           | operator confirmed: engine API reachable only by the co-deployed sentinel. Missing auth/rate-limiting stays Informational unless a bypass exists inside that deployment. |
-| A4  | [x] TRUE           | operator confirmed: malicious RPC **out of scope**. Stale, rate-limited and incomplete `eth_getLogs` results remain in scope. |
-| A5  | [x] TRUE            | Reorgs to `max_reorg_depth` handled; deeper = deliberate exit (PR #834). |
-| A6  | [x] TRUE            | Crypto libraries trusted; review Safenet's usage/adaptations only. Note: dependency sources are NOT on disk (no cargo registry), so upstream behaviour claims stay class `I`. |
-| A7  | [x] TRUE            | Solidity in `contracts/src` is audited and is the reference for hashing/encoding/protocol rules. |
-| A8  | [x] FALSE (forced) | `sentinel-test-vectors` not available AND no toolchain to run it. Engine checker findings cannot reach `E1`. |
-| A9  | [x] FALSE          | Evidence: `cargo`, `rustc`, `rustup`, `forge`, `anvil`, `just` absent; 3 GB RAM. Run downgraded to **read-only**; the report must say so. |
-| A10 | [x] TRUE           | Gnosis Chain ~5 s blocks; documented defaults per `docs/overview.md` and sample configs. |
-| A11 | [x] TRUE           | Scope is exactly PROMPT.md Section 4. |
-| A12 | [x] TRUE           | Known TODOs (codebase-map Section 4) + validator flow-test epic reported tagged `known`, reduced priority. |
-| A13 | [x] TRUE           | Confirmed by the operator in the start message: no branches, no commits, no PRs. |
-| A14 | [x] TRUE           | `git diff 82b3e0d..HEAD` touches only `rust-audit/`; no drift in `crates/`, `Cargo.toml`, `Cargo.lock`. Map line numbers valid. |
-| A15 | [x] TRUE           | Operator supplied the public Charter (github.com/safe-research/safenet-charter). Cloned read-only to the session scratchpad at commit `44a1e53`: `<scratch>/safenet-charter/Safenet_Arbitration_Charter.md`, 909 lines, defining R-4.1 .. R-4.6 — the exact set `engine/rule.rs` cites. Verdict-policy findings (ENG-H2..H7) **may** reach Confirmed. Cite as `safenet-charter@44a1e53:Safenet_Arbitration_Charter.md:<lines>` with a verbatim quote, since the path is session-local. |
+| ID | State | Note |
+| --- | --- | --- |
+| A1 | [x] TRUE | Trusted operator; plaintext secrets at rest documented in `docs/validator-handbook.md`. |
+| A2 | [x] TRUE | Adversarial chain data within the <1/3 fault bound; Safe tx contents attacker-controlled. |
+| A3 | [x] TRUE | operator confirmed: engine API reachable only by the co-deployed sentinel. Missing auth/rate-limiting stays Informational unless a bypass exists inside that deployment. |
+| A4 | [x] TRUE | operator confirmed: malicious RPC **out of scope**. Stale, rate-limited and incomplete `eth_getLogs` results remain in scope. |
+| A5 | [x] TRUE | Reorgs to `max_reorg_depth` handled; deeper = deliberate exit (PR #834). |
+| A6 | [x] TRUE | Crypto libraries trusted; review Safenet's usage/adaptations only. Note: dependency sources are NOT on disk (no cargo registry), so upstream behaviour claims stay class `I`. |
+| A7 | [x] TRUE | Solidity in `contracts/src` is audited and is the reference for hashing/encoding/protocol rules. |
+| A8 | [x] FALSE (forced) | `sentinel-test-vectors` not available AND no toolchain to run it. Engine checker findings cannot reach `E1`. |
+| A9 | [x] FALSE | Evidence: `cargo`, `rustc`, `rustup`, `forge`, `anvil`, `just` absent; 3 GB RAM. Run downgraded to **read-only**; the report must say so. |
+| A10 | [x] TRUE | Gnosis Chain ~5 s blocks; documented defaults per `docs/overview.md` and sample configs. |
+| A11 | [x] TRUE | Scope is exactly PROMPT.md Section 4. |
+| A12 | [x] TRUE | Known TODOs (codebase-map Section 4) + validator flow-test epic reported tagged `known`, reduced priority. |
+| A13 | [x] TRUE | Confirmed by the operator in the start message: no branches, no commits, no PRs. |
+| A14 | [x] TRUE | `git diff 82b3e0d..HEAD` touches only `rust-audit/`; no drift in `crates/`, `Cargo.toml`, `Cargo.lock`. Map line numbers valid. |
+| A15 | [x] TRUE | Operator supplied the public Charter (github.com/safe-research/safenet-charter). Cloned read-only to the session scratchpad at commit `44a1e53`: `<scratch>/safenet-charter/Safenet_Arbitration_Charter.md`, 909 lines, defining R-4.1 .. R-4.6 — the exact set `engine/rule.rs` cites. Verdict-policy findings (ENG-H2..H7) **may** reach Confirmed. Cite as `safenet-charter@44a1e53:Safenet_Arbitration_Charter.md:<lines>` with a verbatim quote, since the path is session-local. |
 
 ## Agents
 
 | Agent | Role | Assignment | Status | Output paths |
-| ----- | ---- | ---------- | ------ | ------------ |
+| --- | --- | --- | --- | --- |
 | Recon | Recon | baseline, inventory, lockfile dupes | **done** | `state/baseline.md` (407 lines), `state/logs/` (11 logs) |
 | R1 | Reviewer | core indexing + reorgs, 4,106 lines, IDs F-CORE-001..029 | **done** (9 findings, 19 hypotheses rejected, 8 observations) | `state/agents/R1.md` |
 | R2 | Reviewer | core runtime/state/effects/observability, 1,998 lines, IDs F-CORE-030..059 | **done** (10 findings, CORE-H10 + M10 refuted, 11 observations) | `state/agents/R2.md` |
@@ -63,7 +62,7 @@ All fifteen signed off at Gate 0 on (operator answers recorded below). A8 and A9
 Certainty column is the **reviewer self-estimate** until a Critic sets it in Phase 2.
 
 | ID | Title | Status | Severity | Certainty |
-| -- | ----- | ------ | -------- | --------- |
+| --- | --- | --- | --- | --- |
 | F-CORE-001 | Snapshots store only block numbers, so a **downtime reorg silently defeats `max_reorg_depth`**; pruning puts the retained anchor at exactly the depth that is fatal while running, so the deliberate exit + restart is self-defeating (CORE-H1) | Draft | High | 85% |
 | F-CORE-002 | `use_client_filtering`'s bloom check is gated on `retries < 3` and its own `IncompleteLogs` errors exhaust the budget; attempt 4 accepts an empty node-filtered result as complete (CORE-H2, and `validator-handbook.md:33-35` documents the failure mode) | Draft | High | 85% |
 | F-CORE-003 | `revalidate_last_block` flattens `Option` before the hash compare, so a lagging backend's `null` becomes a spurious uncle + rollback + replay (CORE-H9 raised) | Draft | Medium | 75% |
@@ -194,7 +193,7 @@ Progress at pause: **78/101 findings critiqued.**
 
 All three engine Criticals rest on one premise: that the first affirming checker suppresses every later denial. C-ENG-B was told to re-derive that **before** judging any of them, because if it were false all three collapsed together. **It holds, with the codebase's own test as evidence**: `engine/mod.rs:57-72` breaks at the first non-`Abstain` verdict and returns it unmodified, and the crate's test `stops_at_the_first_non_abstaining_verdict` (`engine/mod.rs:104-120`) asserts a `Secure` beats a later `Insecure`. A single over-broad affirmer **is** sufficient.
 
-**F-ENG-030 / 031 / 033 stand independently *and* are instances of the promoted F-ENG-044.** Each has its own concrete vector and must be fixed on its own; but the combinator is the shared root cause, so F-ENG-044 must be fixed **as well, not instead** — per-checker fixes are whack-a-mole against the next affirmer. That framing is the single most useful thing Phase 2 produced for the engine.
+**F-ENG-030 / 031 / 033 stand independently _and_ are instances of the promoted F-ENG-044.** Each has its own concrete vector and must be fixed on its own; but the combinator is the shared root cause, so F-ENG-044 must be fixed **as well, not instead** — per-checker fixes are whack-a-mole against the next affirmer. That framing is the single most useful thing Phase 2 produced for the engine.
 
 **F-ENG-031 kept Critical rather than reduced under A12**: the `known` TODOs at `refund.rs:83` and `:93` cover only the native-currency and zero-`refundReceiver` cases. The **ERC-20 refund path, which has no `tx.gasprice` cap, is not `known` at all** — so the `known` tag does not cover the exploitable path.
 
@@ -212,7 +211,7 @@ It also closed the `F-XC-001` interaction: an exhaustive non-test arithmetic swe
 
 **And C-XC caught an `H` claim in another Critic's open assignment**: `F-VAL-064` asserts "there is no `.dockerignore` anywhere in the repository". **Four exist**, under the per-Dockerfile convention a plain search misses — `contracts/`, `crates/validator/`, `crates/sentinel/`, `crates/sentinel-engine/` each hold a `Dockerfile.dockerignore`. Manager-verified. Forwarded to C-VAL-B, which still had F-VAL-064 open, with the note that the underlying concern may survive in narrower form since the file's allow-list re-admits `/crates/**` wholesale with no pattern for `*.toml` or `*.db`.
 
-**Promoted `F-XC-010`** (Confirmed, Low, 80%): the engine crate takes **no `metrics` dependency and has no `metrics.rs`**, yet serves a Prometheus endpoint — so verdicts and checker failures are unmeasurable, recorded only at `trace` and suppressed by the shipped `info` level. This is *why* `F-ENG-032` (a checker dead since it was written) and `F-XC-005` are both invisible in production.
+**Promoted `F-XC-010`** (Confirmed, Low, 80%): the engine crate takes **no `metrics` dependency and has no `metrics.rs`**, yet serves a Prometheus endpoint — so verdicts and checker failures are unmeasurable, recorded only at `trace` and suppressed by the shipped `info` level. This is _why_ `F-ENG-032` (a checker dead since it was written) and `F-XC-005` are both invisible in production.
 
 ## Coverage is complete: zero unread files, four uncovered seams
 
@@ -220,7 +219,7 @@ It also closed the `F-XC-001` interaction: an exhaustive non-test arithmetic swe
 
 **Four seams were genuinely uncovered**, which is the report's honest-limitations material:
 
-1. **CORE-H5's duplicate-action half has no home at the core layer** — R2 deferred it to R3, R3 wrote "not mine to file", *both confirmed the behaviour*, neither filed. Its impact survives only through `F-VAL-065` and `F-SEN-006`, so two service-level symptoms are in the report with no core-level cause. **Sent back to C-CORE-B to file or refute.**
+1. **CORE-H5's duplicate-action half has no home at the core layer** — R2 deferred it to R3, R3 wrote "not mine to file", _both confirmed the behaviour_, neither filed. Its impact survives only through `F-VAL-065` and `F-SEN-006`, so two service-level symptoms are in the report with no core-level cause. **Sent back to C-CORE-B to file or refute.**
 2. **SEN-H9** — dismissed by R7 under A3; no finding mentions a loss budget or kill switch. Conscious, and rests entirely on A3 holding.
 3. **SEN-H15** (un-zeroised config `String`) — a literal mutual deferral: R7 said "owned by R10", R10's `F-XC-009` said "Left with R7". Verified present in all three services; both owners judged it Informational under A1, so it is recorded with citations rather than filed.
 4. **R4's observations O7 and O8** still dangling on VAL-H2, plus **VAL-H8**, which R5 handed to "the Critic" and no Critic took. **Sent to C-VAL-B**, which is still running and owns that scope.
@@ -235,10 +234,10 @@ It also closed the `F-XC-001` interaction: an exhaustive non-test arithmetic swe
 
 **Two reviewer overstatements corrected - both in the direction of less alarm:**
 
-1. **`F-CORE-031`'s "hits on every restart" framing is refuted.** The replay re-emits effects *above* the anchor; loss requires the effect to sit **on** the anchor block - a one-to-two-block coincidence, not a per-restart certainty. Certainty 78%.
+1. **`F-CORE-031`'s "hits on every restart" framing is refuted.** The replay re-emits effects _above_ the anchor; loss requires the effect to sit **on** the anchor block - a one-to-two-block coincidence, not a per-restart certainty. Certainty 78%.
 2. **`F-CORE-063`'s trigger instance 3 is refuted**: `unmark_executed` runs before the only swallowable error, and the uncle path always regresses `latest` - contradicted by R3's **own** coverage-log item 26.
 
-**F-CORE-031 was load-bearing, and it turns out it is not.** C-CORE-B checked each supposed dependant and found none: `F-SEN-001` needs the effect to *be* re-spawned (the opposite case), `F-SEN-002` is about `committed_count`, `F-SEN-003` is the warp arm emitting no `NewBlock`, and `F-VAL-061` is the validator's own `Resume::Noop` path. **Nothing weakens with it**, and it carries its own weight independently. The earlier working assumption that four findings would fall with it was wrong.
+**F-CORE-031 was load-bearing, and it turns out it is not.** C-CORE-B checked each supposed dependant and found none: `F-SEN-001` needs the effect to _be_ re-spawned (the opposite case), `F-SEN-002` is about `committed_count`, `F-SEN-003` is the warp arm emitting no `NewBlock`, and `F-VAL-061` is the validator's own `Resume::Noop` path. **Nothing weakens with it**, and it carries its own weight independently. The earlier working assumption that four findings would fall with it was wrong.
 
 **Severity corrected once**: `F-CORE-062` High -> **Medium** (no attacker steers either trigger; the High band requires attacker-controlled input or a reorg). **A4 boundary check**: `F-CORE-034`/`035` sit correctly on the in-scope side (a rate-limited or erroring provider); `F-CORE-062`/`063` lean on a **fork-inconsistent backend**, which stretches A4's letter - flagged in both files rather than silently accepted.
 
@@ -279,10 +278,10 @@ The three engine Criticals are independently exploitable **and** instances of `F
 
 The three Coverage-Critic promotions were the only findings never adversarially checked. C-VAL-A took the two DKG ones and **cut both down**:
 
-- **`F-XC-050`** ("no DKG handler checks group membership, so one injected `KeyGenConfirmed` closes the round") -> **Plausible, 48%, High -> Medium**. The mechanism is real and `E2`, but **arbitrary injection is refuted**: the log stream *is* address-filtered (`core/index/events.rs:407,417,460`), so only a watched **oracle** address works, which makes the trigger rest entirely on `F-VAL-060` — set at 50% by C-VAL-B. C-VAL-A added a third condition the drafter missed: `confirm_key_gen` sets `Confirmed` at share-round close, so `key_share` is `None` only while a complaint is outstanding.
-- **`F-XC-051`** -> **Plausible, 42%, Medium -> Low**. **Its title is wrong**: `require(c.length == threshold)` runs at `FROSTCoordinator.sol:378` and the `emit` at `:382`, so the contract *is* the emitter and *is* on the path. The identity-coefficient half is reachable but bounded — an all-identity `c` yields `y = (0,0)`, which `FROSTParticipantMap.set:162`'s strict `requireNonZero` rejects, leaving only `a_0 = 0`. Non-exploitable.
+- **`F-XC-050`** ("no DKG handler checks group membership, so one injected `KeyGenConfirmed` closes the round") -> **Plausible, 48%, High -> Medium**. The mechanism is real and `E2`, but **arbitrary injection is refuted**: the log stream _is_ address-filtered (`core/index/events.rs:407,417,460`), so only a watched **oracle** address works, which makes the trigger rest entirely on `F-VAL-060` — set at 50% by C-VAL-B. C-VAL-A added a third condition the drafter missed: `confirm_key_gen` sets `Confirmed` at share-round close, so `key_share` is `None` only while a complaint is outstanding.
+- **`F-XC-051`** -> **Plausible, 42%, Medium -> Low**. **Its title is wrong**: `require(c.length == threshold)` runs at `FROSTCoordinator.sol:378` and the `emit` at `:382`, so the contract _is_ the emitter and _is_ on the path. The identity-coefficient half is reachable but bounded — an all-identity `c` yields `y = (0,0)`, which `FROSTParticipantMap.set:162`'s strict `requireNonZero` rejects, leaving only `a_0 = 0`. Non-exploitable.
 
-**Neither is a second path to F-VAL-001.** F-XC-050 desynchronises one validator's local view and leaks nothing — liveness, not key compromise. F-XC-051's identity attack needs the commitment to *be* the key, which is the **abandoned** `docs/overview.md:48` design; `q` is separate and `from_point` rejects the identity. F-XC-050 does compose with `F-VAL-004`: an early genesis close is unrecoverable because every timeout arm needs a deadline genesis lacks.
+**Neither is a second path to F-VAL-001.** F-XC-050 desynchronises one validator's local view and leaks nothing — liveness, not key compromise. F-XC-051's identity attack needs the commitment to _be_ the key, which is the **abandoned** `docs/overview.md:48` design; `q` is separate and `from_point` rejects the identity. F-XC-050 does compose with `F-VAL-004`: an early genesis close is unrecoverable because every timeout arm needs a deadline genesis lacks.
 
 **A systematic bias was caught rather than a hallucination.** No `H` claims in either file, but **both systematically under-class their own counter-evidence as `I` while every supporting row is `E2`** — a thumb on the scale toward the finding. Flagged in both files so the report does not inherit the tilt. Four citation ranges also start one to two lines before the quoted code: imprecise, not hallucinated.
 
@@ -295,6 +294,7 @@ The three Coverage-Critic promotions were the only findings never adversarially 
 **Q22 is answered, not deferred.** The HKDF reference-vector check needed only `python3`, which this machine has — so QA-XC ran it rather than filing it: `de66ad87...ab0d` reproduces exactly, script and output saved in `poc/F-CORE-038/`. That is the only executed evidence in the entire run, and it was obtained by noticing the question did not actually need Rust.
 
 **Two remediations judged unsound**, which is the point of the remediation check:
+
 - `F-XC-052` option 1 as written - propagating the outer refund fields and `nonce` onto sub-calls would make **one refund look like five**; only the `chain_id` half is correct.
 - `F-XC-001` option 3 - promoting `group.rs:236`'s `debug_assert!` to `assert!` would put the epoch-rollover path behind a **validator crash**; an `if`-guarded `error!` is the right shape.
 - Also: `F-XC-009` option 2 must be dropped along with the refuted `0.0.0.0` item, keeping only its startup-`warn!` clause; `F-XC-003` option 1 is a **detector, not a fix** (the fix is `deny_unknown_fields` on `core::driver::Config`).
@@ -305,27 +305,27 @@ The three Coverage-Critic promotions were the only findings never adversarially 
 
 ## QA-ENG - the open Charter question is settled, and a fix that would have hurt was caught
 
-**Charter §2.15 resolved, then taken further.** Verbatim at line 329: *"An affected Sentinel is a Sentinel whose vote may result in Council-directed slashing in the arbitration."* That supports `F-ENG-042`'s citation but says only **"may"**, and §6.5 defers bonds and slashing to the protocol rules - so QA-ENG went to the protocol rules **in this repo** and found the answer: `contracts/src/libraries/SentinelOracleRequests.sol:298-305` charges `terms.slashAmount` whenever `approved != (state == RESOLVED_APPROVED)`, **with no good-faith exception**. So a wrong denial *does* expose an honest sentinel's bond. `F-ENG-042` moved 72% -> **78%** on that new `E2` evidence.
+**Charter §2.15 resolved, then taken further.** Verbatim at line 329: _"An affected Sentinel is a Sentinel whose vote may result in Council-directed slashing in the arbitration."_ That supports `F-ENG-042`'s citation but says only **"may"**, and §6.5 defers bonds and slashing to the protocol rules - so QA-ENG went to the protocol rules **in this repo** and found the answer: `contracts/src/libraries/SentinelOracleRequests.sol:298-305` charges `terms.slashAmount` whenever `approved != (state == RESOLVED_APPROVED)`, **with no good-faith exception**. So a wrong denial _does_ expose an honest sentinel's bond. `F-ENG-042` moved 72% -> **78%** on that new `E2` evidence.
 
 **But it declined to escalate the severity, and the reasoning is right**: the slash is `fee x slashingMultiplier` - roughly 4 USDC against an 800 USDC bond at launch parameters - and it needs a split vote plus arbitration, with a conjunctive, targeted trigger. That meets neither "at scale" nor "unbounded", so it sits at the **top of Medium** with the two conditions that would escalate it recorded. Resisting an escalation that the evidence does not carry is as valuable as finding the evidence.
 
 **A packaging fact that shapes every engine test**: `sentinel-engine` is a **binary-only crate** - no `src/lib.rs`, no `[lib]` - so `tests/*.rs` integration tests **cannot reach the checkers at all**. Every PoC is therefore an appended in-crate `#[cfg(test)]` module, and adding a thin `lib.rs` is probably the right infrastructure change. 10 PoCs, 45 tests, **17 expected to fail today**, each with the exact `cat >>` / `cargo test` / `git checkout --` commands.
 
-**Six remediations judged unsound** - the most important being **`F-ENG-031` option 2**: *denying* an unvettable refund leg would deny honest relayed traffic; the correct behaviour is to **abstain, not deny**. A fix that turns a missed-detection bug into a wrong-vote bug is worse than the bug. Also: `F-ENG-044` opt 3 (encodes a hand-maintained ordering table - the same reasoning that already failed for `EscapeHatchChecker`), `F-ENG-002` opt 3 and `F-ENG-041` opt 2 (using history as a "plausibly required" proxy denies the first-time honest user), `F-ENG-032` opt 3 (`debug_assert!` is compiled out of the release binary - and `F-XC-001` shows there is no `[profile.release]` at all), and `F-ENG-037` opt 3's `approved >= total` clause (silently reverses `cow.rs:348-350`'s deliberate policy, in the denying direction).
+**Six remediations judged unsound** - the most important being **`F-ENG-031` option 2**: _denying_ an unvettable refund leg would deny honest relayed traffic; the correct behaviour is to **abstain, not deny**. A fix that turns a missed-detection bug into a wrong-vote bug is worse than the bug. Also: `F-ENG-044` opt 3 (encodes a hand-maintained ordering table - the same reasoning that already failed for `EscapeHatchChecker`), `F-ENG-002` opt 3 and `F-ENG-041` opt 2 (using history as a "plausibly required" proxy denies the first-time honest user), `F-ENG-032` opt 3 (`debug_assert!` is compiled out of the release binary - and `F-XC-001` shows there is no `[profile.release]` at all), and `F-ENG-037` opt 3's `approved >= total` clause (silently reverses `cow.rs:348-350`'s deliberate policy, in the denying direction).
 
-**Fix sequencing recorded in `poc/INDEX-ENG.md`**: `F-ENG-044`'s conjunctive fix *increases* RPC fan-out, so `F-ENG-005` (timeouts) and `F-ENG-009` (fan-out bound) are **preconditions**, not follow-ups. `F-ENG-031` opt 1 makes `RefundChecker` unreachable, so `F-ENG-032`'s fix must not be read as "no longer needed". The documentation halves (`F-ENG-001`/`003`/`004`) are separated and shippable today at zero risk.
+**Fix sequencing recorded in `poc/INDEX-ENG.md`**: `F-ENG-044`'s conjunctive fix _increases_ RPC fan-out, so `F-ENG-005` (timeouts) and `F-ENG-009` (fan-out bound) are **preconditions**, not follow-ups. `F-ENG-031` opt 1 makes `RefundChecker` unreachable, so `F-ENG-032`'s fix must not be read as "no longer needed". The documentation halves (`F-ENG-001`/`003`/`004`) are separated and shippable today at zero risk.
 
 ## QA-CORE-SEN - a popular fix that would lose data, and a testing prerequisite nobody stated
 
 **The most important result is a remediation refutation.** `F-CORE-031` option 1 ("commit the resume") is the fix that **`F-SEN-001` opt 3, `F-SEN-015` opt 3 and `F-CORE-002` all point at** - and it is unsound: it commits a snapshot at `latest` while status is `BlockEvents`, so a crash makes the machine resume at `latest+1` and **lose that block's logs permanently**. Four findings were converging on a change that trades a lost effect for lost logs. All four are redirected.
 
-`F-CORE-031` option 3 ("anchor at `uncle-2`, turn loss into duplication") rests on a **false premise** - actions have no at-least-once contract - so it would *worsen* `F-CORE-067`.
+`F-CORE-031` option 3 ("anchor at `uncle-2`, turn loss into duplication") rests on a **false premise** - actions have no at-least-once contract - so it would _worsen_ `F-CORE-067`.
 
-**Other unsound remediations**: `F-CORE-067` opt 3 and `F-CORE-062` opt 3 both rely on `submitted_at IS NULL` meaning "never submitted", when it **also** means "rejected as underpriced" (proved in the `F-CORE-060` PoC part 3) - they would delete or release rows sitting in a mempool. `F-SEN-015` opt 2 is **not implementable as written** (a SQLite write inside the pure, non-`async` `apply_transition`). `F-CORE-060` opt 2 cannot bound an absolute fee and naively creates a *second* ratchet loop. `F-CORE-001` opt 2 has nothing to walk back to - PoC test 2 proves the retained window **is** exactly the fatal depth. And **`F-CORE-004` opt 2 / `F-SEN-013` opt 2 directly contradict `F-CORE-002` opt 1**: same code path, opposite policies, with the required boundary now recorded in `F-CORE-004`.
+**Other unsound remediations**: `F-CORE-067` opt 3 and `F-CORE-062` opt 3 both rely on `submitted_at IS NULL` meaning "never submitted", when it **also** means "rejected as underpriced" (proved in the `F-CORE-060` PoC part 3) - they would delete or release rows sitting in a mempool. `F-SEN-015` opt 2 is **not implementable as written** (a SQLite write inside the pure, non-`async` `apply_transition`). `F-CORE-060` opt 2 cannot bound an absolute fee and naively creates a _second_ ratchet loop. `F-CORE-001` opt 2 has nothing to walk back to - PoC test 2 proves the retained window **is** exactly the fatal depth. And **`F-CORE-004` opt 2 / `F-SEN-013` opt 2 directly contradict `F-CORE-002` opt 1**: same code path, opposite policies, with the required boundary now recorded in `F-CORE-004`.
 
 **A testing prerequisite nobody had stated**: `sentinel` and `validator` are **binary-only crates** (no `lib.rs`) and `core`'s `tx::storage` is **private**, so **no PoC in these crates can live in a `tests/` directory**. Every one must be pasted into an existing `#[cfg(test)] mod tests` block and reverted. Turning them into permanent regression tests requires adding a `lib.rs` to `sentinel` first - an unstated prerequisite that invalidates the "tests to add" line in six `F-SEN` findings. Combined with QA-ENG's identical finding for `sentinel-engine`, **three of the four crates cannot be integration-tested as they are packaged today.**
 
-**C-CORE-B's three-way question answered precisely**: `F-CORE-031` / `F-VAL-030` / `F-VAL-061` do not contradict, but fixing `F-CORE-031` does **not** fix the other two - their triggers are deterministic *failure*, not lost delivery - and it would make `F-VAL-061` **harder to see**, by generating `Resume::Noop`s that read as successes.
+**C-CORE-B's three-way question answered precisely**: `F-CORE-031` / `F-VAL-030` / `F-VAL-061` do not contradict, but fixing `F-CORE-031` does **not** fix the other two - their triggers are deterministic _failure_, not lost delivery - and it would make `F-VAL-061` **harder to see**, by generating `Resume::Noop`s that read as successes.
 
 7 PoCs, 17 tests, every identifier hand-checked against commit `2893917`. **No certainty moved**, correctly.
 
@@ -333,7 +333,7 @@ The three Coverage-Critic promotions were the only findings never adversarially 
 
 **`poc/F-VAL-001/`** is the deliverable the team will actually use: a **7-party DKG ceremony** - pad harvest, impostor share accepted, and Lagrange recovery of the victim's signing share. `poc/F-VAL-033/` is a literal file backup and restore that un-burns a nonce, signs two messages with it, and recovers the key 3x3. Also `F-VAL-005-066` (one harness, two cases, driving the real `StateMachine` through `Uncle -> NewBlock -> Logs`), `F-VAL-004`, `F-VAL-030-032-061`, and `F-VAL-062` - the one-line `KeyShare::dummy` redaction test, the cheapest `E1` in the run.
 
-**The most consequential result is about the remediation, not the finding.** QA-VAL checked `F-VAL-002`'s KDF fix against all six links C-VAL-A verified: it **closes links 4 and 5**, makes the attacker's share *fail* so the attack goes **noisy instead of silent**, and is Solidity-compatible (`FROSTCoordinator` stores `f` and the revealed `secretShare` opaquely). But it **does not close links 1-3**, leaving a liveness variant that only the proof of possession (`F-VAL-001` opt 2) fixes. **The team needs both changes, not either.** A reader who took the KDF fix alone would believe the Critical was closed when it is not.
+**The most consequential result is about the remediation, not the finding.** QA-VAL checked `F-VAL-002`'s KDF fix against all six links C-VAL-A verified: it **closes links 4 and 5**, makes the attacker's share _fail_ so the attack goes **noisy instead of silent**, and is Solidity-compatible (`FROSTCoordinator` stores `f` and the revealed `secretShare` opaquely). But it **does not close links 1-3**, leaving a liveness variant that only the proof of possession (`F-VAL-001` opt 2) fixes. **The team needs both changes, not either.** A reader who took the KDF fix alone would believe the Critical was closed when it is not.
 
 **Nine remediations judged unsound or wrong as written**, notably `F-VAL-003` opt 3, whose text **claims it makes F-VAL-001 impossible** - it does not: the harvest supplies the valid ciphertexts. Others: `F-VAL-005` opt 4 (a commitment-hash key makes the resample invisible, not impossible), `F-VAL-066` opt 4 (a post-write read races the delete it is meant to catch), `F-VAL-033` opt 2 (a high-water mark rejects legitimate lower offsets, reintroducing `F-VAL-030`'s harm), `F-VAL-004` opt 2 (a genesis deadline reaches `Halted` - worse than the stall), and the `F-VAL-030`/`061` "reorder the commands" halves (the driver spawns concurrently).
 
@@ -402,8 +402,8 @@ Ordered plan: (1) the baseline Recon could not run - `build`, `test`, `clippy`, 
 | `F-ENG-032` | 88 -> **99%** | **Strongest result in the run.** `RefundChecker` issues **no `eth_getLogs` at all** — the queued mock response was never consumed. The checker is dead, confirmed by execution, not inference. |
 | `F-ENG-044` | 85 -> **98%** | The verdict is a **function of checker registration order**: `[Secure, denial]` returns `Secure`. The production chain rates a **blocklisted `to`** as `secure`. |
 | `F-ENG-030` | 86 -> **97%** | **1000 ETH to an attacker EOA rated `secure`**, on selector alone. |
-| `F-ENG-034` | 85 -> **97%** | Blocklist bypass reproduced; calldata decoding to *nothing* is affirmed. |
-| `F-ENG-031` | 85 -> **96%** | All three refund legs affirmed. The **ERC-20 leg** (`gasToken=USDC`, `gasPrice=1e18`) — the path C-ENG-B showed is *not* covered by the `known` TODOs — proven `Secure`. |
+| `F-ENG-034` | 85 -> **97%** | Blocklist bypass reproduced; calldata decoding to _nothing_ is affirmed. |
+| `F-ENG-031` | 85 -> **96%** | All three refund legs affirmed. The **ERC-20 leg** (`gasToken=USDC`, `gasPrice=1e18`) — the path C-ENG-B showed is _not_ covered by the `known` TODOs — proven `Secure`. |
 | `F-ENG-033` | 84 -> **96%** | Both halves: `value` never read, and the evidence pool keyed by an attacker-chosen `to` (a self-emitted log affirms). |
 | `F-ENG-037` | 84 -> **96%** | `max_approval_for_twap_total(0, MAX) == MAX-1`, affirmed through the real checker. |
 | `F-ENG-002` | 85 -> **95%** | Denying direction: an honest **Seaport `setApprovalForAll`** returns `Insecure R-4.5`. Honest traffic denied. |
@@ -434,14 +434,14 @@ All seven PoCs **compiled unmodified** — no mechanical repair, no assertion ch
 
 **Question 2 answered: NO.** `alloy-sol-types` 1.6.0 decodes invalid UTF-8 **lossily** — `detokenize` is `from_utf8_lossy`, and the checked `valid_token` path is only reached through the `*_validate` family, which `watcher_events!` does not use. Executed through `SentinelEvents::decode_log`, byte `0x80` returns `Some(... reason: "\u{fffd}")`.
 
-So **basis 8 is refuted**, the conditional severity `"High if basis 8 holds, else Informational"` resolves to **Informational**, and the status is **Refuted-as-filed** (98% confidence *in the refutation*). R7 was right to mark that leg class `I` rather than assert it, and C-SEN was right to forbid its upgrade to `E2`. **The audit's widest-blast-radius hypothesis — one attacker-controlled string stalling every indexer — is false.**
+So **basis 8 is refuted**, the conditional severity `"High if basis 8 holds, else Informational"` resolves to **Informational**, and the status is **Refuted-as-filed** (98% confidence _in the refutation_). R7 was right to mark that leg class `I` rather than assert it, and C-SEN was right to forbid its upgrade to `E2`. **The audit's widest-blast-radius hypothesis — one attacker-controlled string stalling every indexer — is false.**
 
 Important boundary the agent recorded: this does **not** close `F-CORE-004`; the batch-poisoning mechanism survives a lossy decoder.
 
 ### Two more questions answered
 
 - **Q11**: empty, `None` and all-zero `reward` all yield `max_priority_fee_per_gas: 1` (`EIP1559_MIN_PRIORITY_FEE`), `max_fee = 2·base + 1`. `F-CORE-060`'s mock **over-states absolute wei by ~10x** — recorded honestly; the finding is unaffected because the ratchet compounds off the previous submission.
-- **Q10**: **YES** — axum's 422 echoes the offending *field name* verbatim plus the expected schema and a column offset; values are not echoed. Statuses observed: 422 / 415 / 405 / 404. Incidental discovery: **the engine calls `Provider::connect` before binding**, so it will not start without a reachable RPC.
+- **Q10**: **YES** — axum's 422 echoes the offending _field name_ verbatim plus the expected schema and a column offset; values are not echoed. Statuses observed: 422 / 415 / 405 / 404. Incidental discovery: **the engine calls `Provider::connect` before binding**, so it will not start without a reachable RPC.
 
 ## Phase 5 results — validator: the Critical REPRODUCED, three legs REFUTED (V-VAL)
 
@@ -451,7 +451,7 @@ Important boundary the agent recorded: this does **not** close `F-CORE-004`; the
 
 `F-VAL-033`, the second Critical, also reproduced with no repair — restore un-burns the nonce, one nonce signs two messages, and a 3x3 solve recovers the signing share exactly. **Held at 85%, deliberately below 90**, because its trigger is an operator restore that cannot be tested. Reproducing a mechanism is not the same as demonstrating its trigger, and the agent kept that line.
 
-| Finding | Certainty | |
+| Finding | Certainty |  |
 | --- | --- | --- |
 | `F-VAL-004` | 84 -> **93%** | reproduced, no repair, control passes |
 | `F-VAL-061` | 78 -> **93%** | reproduced, 9/9 |
@@ -460,9 +460,9 @@ Important boundary the agent recorded: this does **not** close `F-CORE-004`; the
 
 ### The secret-leak cluster is REFUTED — Informational, not Critical
 
-The question flagged as *"decides Critical vs Informational for three findings"* is answered, and the answer is the reassuring one. **`frost-core` 3.0.0 does redact**: `signing_share: SigningShare("<redacted>")`, `coefficients: "<redacted>"`.
+The question flagged as _"decides Critical vs Informational for three findings"_ is answered, and the answer is the reassuring one. **`frost-core` 3.0.0 does redact**: `signing_share: SigningShare("<redacted>")`, `coefficients: "<redacted>"`.
 
-QA's two apparent "failures" were a **false positive**: `KeyShare::dummy` gives the *identifier* the same `0000...0001` bytes as the scalar, so a naive substring search matched the identifier, not the secret. Only execution could have caught that.
+QA's two apparent "failures" were a **false positive**: `KeyShare::dummy` gives the _identifier_ the same `0000...0001` bytes as the scalar, so a naive substring search matched the identifier, not the secret. Only execution could have caught that.
 
 - `F-VAL-062` **60 -> 88%**, Medium -> **Informational/Low** — leak leg refuted, hygiene leg confirmed
 - `F-XC-002` **74 -> 88%**, Medium -> **Low**
@@ -484,20 +484,20 @@ QA's two apparent "failures" were a **false positive**: `KeyShare::dummy` gives 
 
 | Crate | Manager's briefing | **Verified verdict** |
 | --- | --- | --- |
-| `ruint` 1.18.0 | *"The one that matters"* — reaches all four crates, and the engine does `U256` arithmetic throughout | **NOT reachable.** The advisory covers only **8 shift methods** — not comparisons, add or mul, which is nearly all of the engine's `U256` use. **Zero calls to any of the 8** in `crates/`. The 72 `<<`/`>>` grep hits reduce to 3 real shifts, and the only `U256` one (`sentinel/src/service.rs:922`) sits **inside `#[cfg(test)] mod tests`** (opens at `:840`). Latent; upgrade anyway. |
+| `ruint` 1.18.0 | _"The one that matters"_ — reaches all four crates, and the engine does `U256` arithmetic throughout | **NOT reachable.** The advisory covers only **8 shift methods** — not comparisons, add or mul, which is nearly all of the engine's `U256` use. **Zero calls to any of the 8** in `crates/`. The 72 `<<`/`>>` grep hits reduce to 3 real shifts, and the only `U256` one (`sentinel/src/service.rs:922`) sits **inside `#[cfg(test)] mod tests`** (opens at `:840`). Latent; upgrade anyway. |
 | `h2` 0.4.14 | reaches the engine server **and** the metrics endpoint | **Reachable, but not where expected.** V-XC sent a raw HTTP/2 preface at both servers: the engine's axum API **replied with a 55-byte SETTINGS frame** — it speaks h2 via `axum/tokio -> hyper-util/server-auto` unification **despite axum's own `http2` feature being off**. The metrics endpoint **replied with 0 bytes**: `metrics-exporter-prometheus` uses `hyper::server::conn::http1::Builder` only, so it is **not** affected. |
-| `quinn-proto` **7.5 HIGH** | not reachable | **Confirmed not reachable** — empty `cargo tree -i`, 0 artifacts; an *optional* `reqwest` dep behind `http3`, and reqwest's activated features are only `json`/`rustls`/`__tls`. **Do not lead the report with it.** |
+| `quinn-proto` **7.5 HIGH** | not reachable | **Confirmed not reachable** — empty `cargo tree -i`, 0 artifacts; an _optional_ `reqwest` dep behind `http3`, and reqwest's activated features are only `json`/`rustls`/`__tls`. **Do not lead the report with it.** |
 | `crossbeam-epoch` | probably unreachable | **Not reachable** — neither `rayon-core` nor `metrics-util` `Debug`- or `{:p}`-formats an `Atomic`/`Shared`, and no Safenet code holds one. Checked, not assumed. |
 
 **Warnings are 4 + 3 + 4, not as briefed**: 4 unmaintained; 3 unsound — `anyhow` is **not built at all**, `event-listener` and `lru` are compiled but latent; and **4 yanked**, of which only **`spin` 0.9.8** is actually compiled (via `sqlx-sqlite` -> `flume`, into all three binaries) — the other three are lockfile-only.
 
-**`F-XC-011` filed: Low / Low, 95%** — scored on **reachable impact** (a single loopback-default, A3-gated DoS), *not* on the 7.5 CVSS sitting in the tool output. A report that led with the HIGH would have sent the team at the one advisory that cannot affect them.
+**`F-XC-011` filed: Low / Low, 95%** — scored on **reachable impact** (a single loopback-default, A3-gated DoS), _not_ on the 7.5 CVSS sitting in the tool output. A report that led with the HIGH would have sent the team at the one advisory that cannot affect them.
 
 ### Questions settled, two of them against existing findings
 
 - **Q19 refutes `F-XC-007` item 2**: `sqlx-mysql`/`sqlx-postgres` are **never compiled** — 0 symbols across all three release binaries. That remediation is lockfile hygiene, **not** attack-surface reduction.
-- **Q6 -> no finding.** alloy *does* `vec_try_with_capacity(len)` before validating (`token.rs:430`), but measured across 2^20..2^64 **every case errored with dVSZ = 0 kB and dRSS <= 192 kB** — fallible `try_reserve`, pages never touched. The supplied 2^68 input is the *safest* case, rejected outright by the `usize` check. The memory-exhaustion worry is dead.
-- **Q15** *lowers* the audit's secret-at-rest language: `SigningKey`/`SecretKey` are `ZeroizeOnDrop` and the `to_bytes` copies are already zeroized at `signer.rs:60-63`/`:88-91`; the only residual is that the wipes are not unwind-safe.
+- **Q6 -> no finding.** alloy _does_ `vec_try_with_capacity(len)` before validating (`token.rs:430`), but measured across 2^20..2^64 **every case errored with dVSZ = 0 kB and dRSS <= 192 kB** — fallible `try_reserve`, pages never touched. The supplied 2^68 input is the _safest_ case, rejected outright by the `usize` check. The memory-exhaustion worry is dead.
+- **Q15** _lowers_ the audit's secret-at-rest language: `SigningKey`/`SecretKey` are `ZeroizeOnDrop` and the `to_bytes` copies are already zeroized at `signer.rs:60-63`/`:88-91`; the only residual is that the wipes are not unwind-safe.
 - **Q3**: all 6 PoC tests pass on both crates -> `F-XC-003` **Low -> Informational, 96%**.
 - **Q4**: an un-timed `reqwest` **does** exceed 5 s and the control bounds it -> `F-XC-008` item 1 **`E1`, 94%** (unblocks `F-ENG-005`/`043`, `F-CORE-011`/`039`).
 - **Q7**: confirmed from real rustc flags -> `F-XC-001` **`E1`, 93%**.
@@ -509,13 +509,13 @@ QA's two apparent "failures" were a **false positive**: `KeyShare::dummy` gives 
 
 **108 findings. 39 verified by execution. 27 now in the 90-100 band that was unreachable for the whole read-only run.** Tree clean: 0 modified tracked files, 0 untracked outside `rust-audit/`; `cargo test --workspace` back to 266 passed.
 
-| Final severity | Count |
-| --- | --- |
-| **Critical** | **5** |
-| **High** | **19** |
-| Medium | 32 |
-| Low | 41 |
-| Informational | 11 |
+| Final severity | Count  |
+| -------------- | ------ |
+| **Critical**   | **5**  |
+| **High**       | **19** |
+| Medium         | 32     |
+| Low            | 41     |
+| Informational  | 11     |
 
 **All five Criticals are now `E1`**: `F-ENG-030` 97%, `F-ENG-031` 96%, `F-ENG-033` 96%, `F-VAL-001` 96%, and `F-VAL-033` **held at 85%** because its trigger is an operator restore that cannot be tested.
 
@@ -524,6 +524,7 @@ QA's two apparent "failures" were a **false positive**: `KeyShare::dummy` gives 
 **Reproduced, nothing refuted**: all 10 engine PoCs (17/17 expected failures, each for the claimed reason), all 7 core/sentinel PoCs (every predicted number matched), and the validator cluster including the headline DKG attack.
 
 **Refuted or reduced by execution — five claims:**
+
 1. `F-SEN-013`'s basis 8 — `alloy-sol-types` decodes invalid UTF-8 **lossily**, so the "one string stalls every indexer" hypothesis is **false**; conditional severity resolves to Informational.
 2. The **secret-leak cluster** (`F-VAL-062`, `F-XC-002`, `F-CORE-036`) — `frost-core` 3.0.0 **does** redact. QA's apparent failures were a false positive: `KeyShare::dummy` gives the identifier the same `0000...0001` bytes as the scalar.
 3. `F-VAL-035` leg (c) — `sqlx-sqlite` 0.9 sets `foreign_keys=ON` itself; dropped to 35%, below the reporting bar.
@@ -547,7 +548,7 @@ Foundry **1.8.1** was installed (A9 assumed 1.5.1 — gap recorded). Three of fo
 The suite reports `SUCCESS`. It is wrong, in three separate ways V-INT established from the harness source and the validator logs:
 
 1. **The harness never restarts validator A.** Its comment and its SUCCESS message both claim a restart; there is a single `starting validator service` line. The test does not do what it says.
-2. **It uncles the `KeyGenSecretShared` block (9), which sits below the epoch-1 group's `KeyGen` block (10)** — *exactly* `F-VAL-005`'s trigger — but it only ever asserts on the **genesis** group, which lands in a retained rollover arm. The affected group is never checked.
+2. **It uncles the `KeyGenSecretShared` block (9), which sits below the epoch-1 group's `KeyGen` block (10)** — _exactly_ `F-VAL-005`'s trigger — but it only ever asserts on the **genesis** group, which lands in a retained rollover arm. The affected group is never checked.
 3. **Both validators logged** `failed to advance key generation, skipping to next epoch :: "The participant's commitment is incorrect."`, and validator A's epoch-1 commitment **differs before (`0343738943...`) and after (`03308eece3...`) the reorg** — the row was deleted and resampled, which is the finding's exact mechanism.
 
 **Epoch 1 was lost network-wide while the suite printed SUCCESS.** A green regression test is not evidence of correctness when it asserts on the wrong group.
@@ -558,9 +559,9 @@ V-INT also closed the loop on re-inclusion: the stale commitment came back throu
 
 I had argued the passing deep-reorg suite was compatible with `F-CORE-001` because the suite reorgs while the validator is **running**. V-INT tested rather than trusted: it built a **downtime-reorg probe** with identical parameters and observed **0 `ExceededMaxReorgDepth`, the process surviving, and zero WARN/ERROR** — using the repo's own passing suite as the live control. The finding is confirmed by direct experiment.
 
-| Finding | Certainty | |
+| Finding | Certainty |  |
 | --- | --- | --- |
-| `F-VAL-005` | 91 -> **99%** | reproduced *by the passing suite itself* |
+| `F-VAL-005` | 91 -> **99%** | reproduced _by the passing suite itself_ |
 | `F-CORE-001` | 96 -> **99%** | downtime probe silent where the live control fails loudly |
 | `F-VAL-061` | 93 -> **98%** | unforced `failed to perform effect NonceTree ... "nonce generator is unavailable"` -> `Resume::Noop`, no retry |
 | `F-VAL-030` | 92 -> **97%** | that failure strands the chunk reservation; no chunk beyond 0 ever linked |
@@ -573,7 +574,7 @@ I had argued the passing deep-reorg suite was compatible with `F-CORE-001` becau
 
 ### A correction to the Manager's own cross-cutting caveat
 
-I stated broadly that `busy_timeout = 5000` raises the bar for *every* "transient SQLite error" trigger. V-INT corrected `F-VAL-066`'s basis claim 10: `busy_timeout` and `journal_mode` **do not protect it at all**, because it is an **ordering** hazard, not an error hazard. The caveat applies only to findings whose trigger is genuinely a transient error — `F-VAL-004` among them, and there effect failures are now shown to occur **unforced**.
+I stated broadly that `busy_timeout = 5000` raises the bar for _every_ "transient SQLite error" trigger. V-INT corrected `F-VAL-066`'s basis claim 10: `busy_timeout` and `journal_mode` **do not protect it at all**, because it is an **ordering** hazard, not an error hazard. The caveat applies only to findings whose trigger is genuinely a transient error — `F-VAL-004` among them, and there effect failures are now shown to occur **unforced**.
 
 ## Phase 8 — sentinel-engine: every finding reproduced against a live service, with real value moving
 
@@ -585,7 +586,7 @@ These are no longer mock-transport unit tests. A real engine service, real Safe 
 | --- | --- | --- |
 | `F-ENG-030` | 97 -> **99%** | `{"verdict":"secure"}` for **1000 ETH** to a codeless EOA; **executed on the real Safe proxy, balance `1000e18` -> `0`.** First attempt. |
 | `F-ENG-031` | 96 -> **99%** | Both legs. ERC-20 refund `secure`, **0.503 tokens really paid out**; native refund `secure`, **100.0003 ETH really paid out** (attacker relays at 100 gwei, `baseGas` unbounded). `RefundChecker` never reached, at position 9. |
-| `F-ENG-033` | 96 -> **99%** | Attacker forged `Transfer(safe->attacker,1)` **from their own EOA on their own non-token contract**; the engine logged *"address-poisoning: genuine prior interaction found"* -> `secure`; executed, **1000 ETH drained.** |
+| `F-ENG-033` | 96 -> **99%** | Attacker forged `Transfer(safe->attacker,1)` **from their own EOA on their own non-token contract**; the engine logged _"address-poisoning: genuine prior interaction found"_ -> `secure`; executed, **1000 ETH drained.** |
 | `F-ENG-044` | 98 -> **99%** | Production wiring, operator-populated blocklist: same `to` with plain calldata -> `insecure R-4.6`; **prefix it with `announceTransaction` (`0x7b328c10`) -> `secure`**, `BlocklistChecker` never ran. Severity **kept High** deliberately — its Critical impacts are already carried by the separately-filed instances. |
 | `F-ENG-002` | 95 -> **99%** | An honest `setApprovalForAll(Seaport conduit, true)` from a Safe that **really owns the NFT** -> `insecure R-4.5`, and the transaction then executes fine. Controls confirm the ERC-20 arm is correct, so the defect is confined exactly where claimed. **No config can exempt it.** |
 | `F-ENG-032` | **99%** | Against a real reachable node the checker issued **zero `eth_getLogs`** — the single call logged belonged to `address_poisoning`. Misleading warn: `tx_chain_id: "0", provider_chain_id: 31337`. |
@@ -594,10 +595,10 @@ These are no longer mock-transport unit tests. A real engine service, real Safe 
 
 Both tested back to back on the same chain (mined to block 15,014) behind a **local proxy** mimicking a 10,000-block cap:
 
-- Shipped sample values -> **`abstain`** with *"range 15014 exceeds limit of 10000"*. `F-XC-005` reproduces.
+- Shipped sample values -> **`abstain`** with _"range 15014 exceeds limit of 10000"_. `F-XC-005` reproduces.
 - Set `address_poisoning_max_block_range = 10000` — **the remedy the sample file itself documents** — change nothing else -> **`secure`** again. `F-ENG-033` reproduces.
 
-So `F-XC-005` is a **config defect that masks `F-ENG-033` in one corner of the config space**. The masked state is **not** safe: it silently switches off the engine's only lookalike *denial*, while `F-ENG-030`/`031`/`044` still affirm drains **without touching the RPC at all**. Neither severity moves. `F-XC-005` rose 76 -> **92%**.
+So `F-XC-005` is a **config defect that masks `F-ENG-033` in one corner of the config space**. The masked state is **not** safe: it silently switches off the engine's only lookalike _denial_, while `F-ENG-030`/`031`/`044` still affirm drains **without touching the RPC at all**. Neither severity moves. `F-XC-005` rose 76 -> **92%**.
 
 ### Incidental, and operationally nasty
 
@@ -611,7 +612,7 @@ The in-process ceremony could have been skipping a check the contracts enforce. 
 
 ### `F-VAL-033` did NOT reproduce as nonce reuse — Critical -> **High**, 85 -> **72%**
 
-Two well-formed live runs. **The un-burn is real** — that part of the mechanism stands. But the restore-across-reorg drove the validator into a **permanent genesis self-halt / epoch non-participation *before* any nonce could be reused**. The validator breaks itself before it can leak anything.
+Two well-formed live runs. **The un-burn is real** — that part of the mechanism stands. But the restore-across-reorg drove the validator into a **permanent genesis self-halt / epoch non-participation _before_ any nonce could be reused**. The validator breaks itself before it can leak anything.
 
 So the impact is **self-inflicted denial of service, not key leakage** — a materially different and less severe defect than filed. This is the phase working as intended: the finding was Critical on the strength of "nonce reuse leaks the FROST key", and under real conditions the system never gets there. **The audit now has four Criticals, not five.**
 
@@ -631,7 +632,7 @@ Two findings are now honestly marked **partially testable**: the mechanism is li
 
 ## Phase 8 — sentinel + core: every money finding reproduced, with the loss quantified
 
-**The sentinel harness now runs.** `run_sentinel_integration_test.sh` was copied to the scratchpad and repaired — green on Foundry 1.8.1. It needed **three** fixes, not the two found earlier: the `cast wallet new --json` envelope (`.data[N]`), bare contract names needing `<file>.s.sol:<Contract>`, and — new — **`--root <dir>` no longer resolving a *relative* script path**, so the `.sol` path must be absolute. `cast block`/`receipt --json` gained the same envelope. Isolated on ports 8645-8649 with renamed binary copies, because a sibling agent held 8545 and its `pkill` killed one run.
+**The sentinel harness now runs.** `run_sentinel_integration_test.sh` was copied to the scratchpad and repaired — green on Foundry 1.8.1. It needed **three** fixes, not the two found earlier: the `cast wallet new --json` envelope (`.data[N]`), bare contract names needing `<file>.s.sol:<Contract>`, and — new — **`--root <dir>` no longer resolving a _relative_ script path**, so the `.sol` path must be absolute. `cast block`/`receipt --json` gained the same envelope. Isolated on ports 8645-8649 with renamed binary copies, because a sibling agent held 8545 and its `pkill` killed one run.
 
 | Finding | Certainty | What it actually cost |
 | --- | --- | --- |
@@ -643,23 +644,23 @@ Two findings are now honestly marked **partially testable**: the mechanism is li
 | `F-CORE-002` | 97 -> **99%** | A/B: 3x HTTP 429 then one empty `eth_getLogs` -> **accepted silently, logs lost, sentinel -4,000 with 2,000 slashed**. Control with the budget intact -> the same empty answer **rejected** (`incomplete logs served for block, bloom filter mismatch`) and recovered, **+500**. |
 | `F-CORE-060` | 97 -> **98%** | Real Anvil fee market: tip **1 -> 11,527 -> 201,207 wei**, max fee **4,239 gwei against a real base fee of 772 wei** — `priority_fee_cap_percentage = 1` bypassed by **~28,700x**. |
 
-**An honest constraint recorded on `F-CORE-060`**: Anvil *accepts* the code's own 10%-both-components bump, so **the ratchet does not self-start on a healthy node** — it needs a stale fee floor (a restored database, or a foreign transaction sitting at the nonce). The balance-brake sub-claim is not testable locally. That materially narrows the trigger without touching the mechanism.
+**An honest constraint recorded on `F-CORE-060`**: Anvil _accepts_ the code's own 10%-both-components bump, so **the ratchet does not self-start on a healthy node** — it needs a stale fee floor (a restored database, or a foreign transaction sitting at the nonce). The balance-brake sub-claim is not testable locally. That materially narrows the trigger without touching the mechanism.
 
 ## Gate 9 (CLOSED) — final sign-off after real-world validation
 
 `report/REPORT.md`, **3,120 lines**. Verified from the repository root: **all 108 findings present**, **every relative link resolves**, **0 modified tracked files, 0 untracked outside `rust-audit/`, 0 commits**, still on `rust-audit` at `2893917`. `cargo test --workspace`: **266 passed, 0 failed**. No stray listeners on 8545-8549, 8645-8649 or 5473.
 
-The report now carries a **Safety boundary** block in the executive summary, a **"What live testing did not establish"** block holding all four honest limits, §4.12 (Phase 8 results with losses quantified, the repaired sentinel harness with its three fixes named, the health-listener trap) and §9.8. The `F-VAL-033` downgrade has its own subsection — *"A Critical fell, and that is the phase working as intended"*.
+The report now carries a **Safety boundary** block in the executive summary, a **"What live testing did not establish"** block holding all four honest limits, §4.12 (Phase 8 results with losses quantified, the repaired sentinel harness with its three fixes named, the health-listener trap) and §9.8. The `F-VAL-033` downgrade has its own subsection — _"A Critical fell, and that is the phase working as intended"_.
 
 ## Gate 8 (CLOSED) — final tally after real-world validation
 
-| Final severity | Count |
-| --- | --- |
-| **Critical** | **4** (was 5 — `F-VAL-033` fell to High) |
-| **High** | **20** |
-| Medium | 32 |
-| Low | 41 |
-| Informational | 11 |
+| Final severity | Count                                    |
+| -------------- | ---------------------------------------- |
+| **Critical**   | **4** (was 5 — `F-VAL-033` fell to High) |
+| **High**       | **20**                                   |
+| Medium         | 32                                       |
+| Low            | 41                                       |
+| Informational  | 11                                       |
 
 **108 findings; 21 validated end-to-end against real contracts on local Anvil; 21 at >=95%.**
 
@@ -688,6 +689,7 @@ The green-test-hides-the-bug result now opens the executive summary as "The sing
 - **`cargo test --workspace` back to 266 passed, 0 failed** - every temporary PoC edit reverted, the repository is exactly as the run found it.
 
 **Two Manager errors caught by the Documentation agent**, both recorded rather than quietly fixed:
+
 1. I reported **40** findings with a `## Verification` section; it is **39**. My `grep -l` matched a `###` QA subsection in `F-CORE-062` whose heading contains the word "Verification". The agent checked instead of accepting the number.
 2. `STATE.md`'s "Final numbers" table was left pre-Phase-5. The agent used Gate 5 and the finding headers instead, and flagged the staleness. Now corrected, with the superseded line kept for provenance.
 
@@ -699,7 +701,7 @@ Phase 6: the Documentation agent updates `report/REPORT.md` to reflect Phase 5 �
 
 ## Final numbers (post-Phase-5)
 
-| | |
+|  |  |
 | --- | --- |
 | Findings | **108** (95 from reviewers, 12 promoted by Critics, 1 from Phase 5) |
 | Critical / High / Medium / Low / Informational | **5 / 19 / 32 / 41 / 11** |

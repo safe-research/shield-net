@@ -1,20 +1,20 @@
 # F-VAL-035 Secret nonce material is copied into unzeroised JSON strings, abandoned chunks are never pruned, and the only path that erases retired groups' nonces is untested and depends on an unasserted SQLite pragma
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | Verified (reduced — leg (c) refuted) |
-| Crate and module     | validator, secrets/store.rs                                                     |
-| Location             | crates/validator/src/secrets/store.rs:66-93, 141-167, 177-196, 205-218, 220-253, 262-447 (related: crates/core/src/utils.rs:56-62, crates/validator/src/frost/preprocess.rs:112-121) |
-| Severity             | Low / Low                                                                       |
-| Certainty            | 35% (V-VAL, Phase 5 — the cascade leg is REFUTED by execution) |
-| Assumptions involved | A1, A6                                                                          |
-| Tags                 | crypto, deps                                                                    |
+| Field | Value |
+| --- | --- |
+| Status | Verified (reduced — leg (c) refuted) |
+| Crate and module | validator, secrets/store.rs |
+| Location | crates/validator/src/secrets/store.rs:66-93, 141-167, 177-196, 205-218, 220-253, 262-447 (related: crates/core/src/utils.rs:56-62, crates/validator/src/frost/preprocess.rs:112-121) |
+| Severity | Low / Low |
+| Certainty | 35% (V-VAL, Phase 5 — the cascade leg is REFUTED by execution) |
+| Assumptions involved | A1, A6 |
+| Tags | crypto, deps |
 
 ## Claim
 
 Three related gaps in how the secret store handles signing-nonce material. Individually each is small; together they mean the validator keeps more live secret nonce material, in more places, for longer, than its own module documentation claims.
 
-**(a) No zeroisation on the serialisation path.** Every nonce crosses the store as a `serde_json` `String`. `register_nonces_chunk` builds 1024 of them, `nonces_reveal` and `take_nonce` each parse one back. None is zeroised, so the hiding and binding scalars of a chunk are left in freed heap after the owning `Nonces` value is dropped - including the one nonce that has just been *deleted from disk specifically so it can never be used again*. The crate zeroises elsewhere where it matters (`EncryptionKey`, the signer key bytes), so this is an inconsistency rather than a blanket design choice.
+**(a) No zeroisation on the serialisation path.** Every nonce crosses the store as a `serde_json` `String`. `register_nonces_chunk` builds 1024 of them, `nonces_reveal` and `take_nonce` each parse one back. None is zeroised, so the hiding and binding scalars of a chunk are left in freed heap after the owning `Nonces` value is dropped - including the one nonce that has just been _deleted from disk specifically so it can never be used again_. The crate zeroises elsewhere where it matters (`EncryptionKey`, the signer key bytes), so this is an inconsistency rather than a blanket design choice.
 
 **(b) Abandoned chunks are never reclaimed.** `register_nonces_chunk` allocates a fresh root every time it runs, and retention is keyed by group id only. A chunk whose `NonceTree` resume was lost (F-VAL-030), or whose `preprocess` transaction never landed, keeps its 1024 secret nonce pairs on disk for as long as the group is tracked - typically the rest of the epoch. Nothing counts, logs or bounds these.
 
@@ -25,7 +25,7 @@ Under A1 the disk is already assumed to hold plaintext secrets by design, which 
 ## Basis
 
 | # | Claim | Class | Citation | Verbatim quote |
-| - | ----- | ----- | -------- | -------------- |
+| --- | --- | --- | --- | --- |
 | 1 | Nonces are serialised to plain `String`s, 1024 at a time, with no zeroisation. | E2 | crates/validator/src/secrets/store.rs:141-167 | excerpt 1 |
 | 2 | The consuming read parses the secret out of an unzeroised `String` and discards it. | E2 | crates/validator/src/secrets/store.rs:205-218 | excerpt 2 |
 | 3 | The schema relies on `ON DELETE CASCADE` for the `nonces` table. | E2 | crates/validator/src/secrets/store.rs:81-90 | excerpt 3 |
@@ -68,6 +68,7 @@ Under A1 the disk is already assumed to hold plaintext secrets by design, which 
         Ok(root)
     }
 ```
+
 **`crates/validator/src/secrets/store.rs:205-218`**
 
 ```rust
@@ -86,6 +87,7 @@ Under A1 the disk is already assumed to hold plaintext secrets by design, which 
         .map_err(Error::from)
     }
 ```
+
 **`crates/validator/src/secrets/store.rs:81-90`**
 
 ```sql
@@ -100,6 +102,7 @@ Under A1 the disk is already assumed to hold plaintext secrets by design, which 
              CREATE INDEX IF NOT EXISTS idx_nonces_chunks_group
                  ON nonces_chunks (group_id);",
 ```
+
 **`crates/validator/src/secrets/store.rs:220-253`**
 
 ```rust
@@ -138,6 +141,7 @@ Under A1 the disk is already assumed to hold plaintext secrets by design, which 
         Ok()
     }
 ```
+
 **`crates/core/src/utils.rs:56-62`**
 
 ```rust
@@ -149,6 +153,7 @@ pub async fn connect_sqlite(options: SqliteConnectOptions) -> Result<SqlitePool,
         .await
 }
 ```
+
 **`crates/validator/src/secrets/store.rs:360-381`**
 
 ```rust
@@ -175,6 +180,7 @@ pub async fn connect_sqlite(options: SqliteConnectOptions) -> Result<SqlitePool,
         assert!(get_keygen_secrets(&store, other_group).await.is_none);
     }
 ```
+
 **`crates/validator/src/service/effect.rs:219-229`**
 
 ```rust
@@ -190,6 +196,7 @@ pub async fn connect_sqlite(options: SqliteConnectOptions) -> Result<SqlitePool,
                     .await?;
                 self.secrets.retain_keygen_secrets(keygen).await?;
 ```
+
 **`crates/validator/src/frost/preprocess.rs:106-121`**
 
 ```rust
@@ -215,11 +222,11 @@ pub async fn connect_sqlite(options: SqliteConnectOptions) -> Result<SqlitePool,
 
 None identified for a direct attack - A1 places the host filesystem and process memory outside the adversary's reach, so this is defence in depth plus one testing gap.
 
-The reachable *conditions* are ordinary: (a) happens on every signature and every chunk registration; (b) happens whenever a `NonceTree` effect is lost or a `preprocess` transaction fails to land, which F-VAL-030 shows is a routine restart outcome; (c) would surface only if the sqlx default changed on an upgrade, at which point the symptom is silent - no error, no log, just `nonces` rows that outlive every reference to them.
+The reachable _conditions_ are ordinary: (a) happens on every signature and every chunk registration; (b) happens whenever a `NonceTree` effect is lost or a `preprocess` transaction fails to land, which F-VAL-030 shows is a routine restart outcome; (c) would surface only if the sqlx default changed on an upgrade, at which point the symptom is silent - no error, no log, just `nonces` rows that outlive every reference to them.
 
 ## Considered and rejected
 
-- **"`PRAGMA foreign_keys` is definitely on, so (c) is a non-issue."** Not verifiable here. sqlx 0.9 (`Cargo.toml:19`) is the pinned version and its `SqliteConnectOptions` is documented to enable foreign keys, but under A6 an assertion about its internals is class `I`, and A6 explicitly forbids treating an unread dependency's behaviour as evidence. The defect I *can* evidence is the absence of any test or explicit pragma. I checked whether configuration could disable it: `crates/validator/src/config.rs:29` takes the options from a URL string, and I found no URL parameter in the sample or schema that would turn foreign keys off - so this is not an operator footgun, only a silent-upgrade hazard.
+- **"`PRAGMA foreign_keys` is definitely on, so (c) is a non-issue."** Not verifiable here. sqlx 0.9 (`Cargo.toml:19`) is the pinned version and its `SqliteConnectOptions` is documented to enable foreign keys, but under A6 an assertion about its internals is class `I`, and A6 explicitly forbids treating an unread dependency's behaviour as evidence. The defect I _can_ evidence is the absence of any test or explicit pragma. I checked whether configuration could disable it: `crates/validator/src/config.rs:29` takes the options from a URL string, and I found no URL parameter in the sample or schema that would turn foreign keys off - so this is not an operator footgun, only a silent-upgrade hazard.
 - **"Zeroising the JSON strings is pointless because SQLite has already written the plaintext to disk."** Partly right, and it is why this is Low rather than Medium. It is still worth doing for `take_nonce`, whose entire purpose is to make one specific nonce unrecoverable; leaving a copy in freed heap directly contradicts that intent, and the copy is the one that survives into a core dump or a swapped page.
 - **"Abandoned chunks are bounded by `retain_nonces`."** Rejected - basis 4 and 7 show retention is per group, and the group stays tracked for the epoch.
 - **"`register_nonces_chunk` would overwrite the abandoned root."** Rejected: it inserts a fresh row keyed by a new Merkle root (basis 1); a bare `INSERT` on a colliding root would in fact error rather than replace, though a collision is unreachable in practice.
@@ -239,136 +246,62 @@ The reachable *conditions* are ordinary: (a) happens on every signature and ever
 
 ## Critic (C-VAL-B)
 
-Derived from `secrets/store.rs` in full, `core/utils.rs:40-62`, `service/effect.rs:202-238` and
-`frost/preprocess.rs:106-121` before reading the Claim.
+Derived from `secrets/store.rs` in full, `core/utils.rs:40-62`, `service/effect.rs:202-238` and `frost/preprocess.rs:106-121` before reading the Claim.
 
 ### Per-claim verdicts
 
-All eight basis rows **Supported**; every quote matches this checkout. Basis 6 cites the test range
-`store.rs:360-381`; I read the whole module (`:262-447`) and confirm its five `#[tokio::test]`s cover
-`store_keygen_secrets`, `retain_keygen_secrets`, `register_nonces_chunk`, `nonces_reveal` and
-`take_nonce`, and that `retain_nonces` is never called and the `ON DELETE CASCADE` never asserted.
-No `H` claims.
+All eight basis rows **Supported**; every quote matches this checkout. Basis 6 cites the test range `store.rs:360-381`; I read the whole module (`:262-447`) and confirm its five `#[tokio::test]`s cover `store_keygen_secrets`, `retain_keygen_secrets`, `register_nonces_chunk`, `nonces_reveal` and `take_nonce`, and that `retain_nonces` is never called and the `ON DELETE CASCADE` never asserted. No `H` claims.
 
 ### Sub-claim by sub-claim
 
-**(a) No zeroisation - Supported, and correctly classed as an inconsistency rather than a hole.**
-Every nonce crosses the store as a `serde_json` `String` (`store.rs:160`, `:190`, `:215`) with no
-`Zeroizing` wrapper, while `EncryptionKey` has both a redacting `Debug` and a `Drop` that zeroises
-(`frost/ecdh.rs:50-59`). Under A1 the host is trusted, so this is defence in depth; the reviewer says
-so rather than inflating it.
+**(a) No zeroisation - Supported, and correctly classed as an inconsistency rather than a hole.** Every nonce crosses the store as a `serde_json` `String` (`store.rs:160`, `:190`, `:215`) with no `Zeroizing` wrapper, while `EncryptionKey` has both a redacting `Debug` and a `Drop` that zeroises (`frost/ecdh.rs:50-59`). Under A1 the host is trusted, so this is defence in depth; the reviewer says so rather than inflating it.
 
-**(b) Abandoned chunks are never reclaimed - Supported.** `register_nonces_chunk` always mints a
-fresh root, and `retain_groups` filters on `group_id` only (`store.rs:239-249`), so an orphaned root
-belonging to a live group is unreachable by every retention path. F-VAL-030's lost `NonceTree` and
-F-VAL-065's duplicate `Preprocess` both produce such orphans, so the condition is ordinary rather
-than hypothetical.
+**(b) Abandoned chunks are never reclaimed - Supported.** `register_nonces_chunk` always mints a fresh root, and `retain_groups` filters on `group_id` only (`store.rs:239-249`), so an orphaned root belonging to a live group is unreachable by every retention path. F-VAL-030's lost `NonceTree` and F-VAL-065's duplicate `Preprocess` both produce such orphans, so the condition is ordinary rather than hypothetical.
 
-**(c) The cascade rests on an unasserted pragma - Supported as *structure*, class `I` as
-*behaviour*.** `connect_sqlite` sets only `idle_timeout(None)` and `max_lifetime(None)`
-(`core/utils.rs:56-62`), `config.rs:28-29` takes `SqliteConnectOptions` straight from the TOML
-string, and no pragma is set anywhere in the workspace (I grepped). Whether `sqlx` 0.9.0 defaults
-`foreign_keys` on is a dependency internal whose source is not on disk (`state/baseline.md` §1), so
-under A6 that leg cannot exceed `I` this run - exactly as the reviewer says. I note the discipline
-approvingly: the *testable* consequence (nothing in the repository pins the cascade) is stated as
-`E2` and the dependency behaviour is not asserted. This is the correct disposal of seeded lead M6.
+**(c) The cascade rests on an unasserted pragma - Supported as _structure_, class `I` as _behaviour_.** `connect_sqlite` sets only `idle_timeout(None)` and `max_lifetime(None)` (`core/utils.rs:56-62`), `config.rs:28-29` takes `SqliteConnectOptions` straight from the TOML string, and no pragma is set anywhere in the workspace (I grepped). Whether `sqlx` 0.9.0 defaults `foreign_keys` on is a dependency internal whose source is not on disk (`state/baseline.md` §1), so under A6 that leg cannot exceed `I` this run - exactly as the reviewer says. I note the discipline approvingly: the _testable_ consequence (nothing in the repository pins the cascade) is stated as `E2` and the dependency behaviour is not asserted. This is the correct disposal of seeded lead M6.
 
 ### Finding verdict
 
-**Plausible - 45%.** Mechanism `E2` for (a) and (b), which are unconditional and occur on every
-signature and every lost chunk. (c)'s harmful case depends on an unreadable dependency default. No
-trigger produces a security consequence under A1, so this cannot be Confirmed; but (b) is a real,
-ongoing, unbounded accumulation of live secret nonce material with no metric, which keeps it above 40.
+**Plausible - 45%.** Mechanism `E2` for (a) and (b), which are unconditional and occur on every signature and every lost chunk. (c)'s harmful case depends on an unreadable dependency default. No trigger produces a security consequence under A1, so this cannot be Confirmed; but (b) is a real, ongoing, unbounded accumulation of live secret nonce material with no metric, which keeps it above 40.
 
-**Severity: Low (unchanged).** Correct under A1 - the disk is already a trusted plaintext store by
-documented design (`docs/validator-handbook.md:58`), so none of the three is exploitable by the
-adversary the assumptions grant, and A1 explicitly forbids treating "the operator can read the key
-file" as a finding. I would not raise it.
+**Severity: Low (unchanged).** Correct under A1 - the disk is already a trusted plaintext store by documented design (`docs/validator-handbook.md:58`), so none of the three is exploitable by the adversary the assumptions grant, and A1 explicitly forbids treating "the operator can read the key file" as a finding. I would not raise it.
 
-**QA note.** (c) is the only part whose failure is silent, unbounded and externally undetectable, and
-it is settled permanently by a five-line test - `register_nonces_chunk`, `retain_nonces([])`, assert
-`SELECT COUNT(*) FROM nonces == 0` - which answers M6 without reading `sqlx` at all. That test is
-worth more than the rest of the finding.
+**QA note.** (c) is the only part whose failure is silent, unbounded and externally undetectable, and it is settled permanently by a five-line test - `register_nonces_chunk`, `retain_nonces([])`, assert `SELECT COUNT(*) FROM nonces == 0` - which answers M6 without reading `sqlx` at all. That test is worth more than the rest of the finding.
 
 ## QA (QA-VAL)
 
 **Outcome: Not attempted (no toolchain).** Certainty unchanged at **45%**; severity Low unchanged.
 
-**Partial PoC coverage.** Item (c) — the cascade resting on an unasserted pragma — is exercised by
-[`poc/F-VAL-005-066/secrets_reconciliation.rs::reconciliation_cascades_away_a_committed_nonce_chunk`](../poc/F-VAL-005-066/secrets_reconciliation.rs),
-which registers a chunk, calls `retain_nonces` with a set that omits its group, and asserts the
-nonces are gone. That test was written for F-VAL-066's nonce half, but it answers (c) as a side
-effect and is the five-line test C-VAL-B says is "worth more than the rest of the finding". It is
-recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md)
-**VAL-Q3**, with the exact assertion spelled out there so it can be landed in
-`crates/validator/src/secrets/store.rs`'s own test module rather than left under `poc/`.
+**Partial PoC coverage.** Item (c) — the cascade resting on an unasserted pragma — is exercised by [`poc/F-VAL-005-066/secrets_reconciliation.rs::reconciliation_cascades_away_a_committed_nonce_chunk`](../poc/F-VAL-005-066/secrets_reconciliation.rs), which registers a chunk, calls `retain_nonces` with a set that omits its group, and asserts the nonces are gone. That test was written for F-VAL-066's nonce half, but it answers (c) as a side effect and is the five-line test C-VAL-B says is "worth more than the rest of the finding". It is recorded as [`poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md`](../poc/UNRESOLVED-DEPENDENCY-QUESTIONS-VAL.md) **VAL-Q3**, with the exact assertion spelled out there so it can be landed in `crates/validator/src/secrets/store.rs`'s own test module rather than left under `poc/`.
 
 **Read the result carefully, because both outcomes are informative and they point opposite ways:**
 
-- If the cascade **fires**, `sqlx` enables `PRAGMA foreign_keys` and (c) is an upgrade hazard only —
-  the finding's own framing.
-- If it **does not fire**, (c) is a live defect: `nonces` rows are *orphaned* rather than deleted,
-  they outlive every reference to them, and no later `retain_nonces` can ever find them because the
-  chunk row that named their group is gone. That also changes F-VAL-066's nonce consequence from
-  "the chunk is unsignable" to "the chunk is unsignable **and** its secrets stay on disk forever".
-  Either way, set the pragma explicitly.
+- If the cascade **fires**, `sqlx` enables `PRAGMA foreign_keys` and (c) is an upgrade hazard only — the finding's own framing.
+- If it **does not fire**, (c) is a live defect: `nonces` rows are _orphaned_ rather than deleted, they outlive every reference to them, and no later `retain_nonces` can ever find them because the chunk row that named their group is gone. That also changes F-VAL-066's nonce consequence from "the chunk is unsignable" to "the chunk is unsignable **and** its secrets stay on disk forever". Either way, set the pragma explicitly.
 
 ### What would be run for (a) and (b)
 
-Neither is a test question. (a) — no zeroisation of the JSON `String`s — is `E2` by reading
-(`store.rs:160`, `:190`, `:215`) and cannot be observed from Rust; demonstrating it needs a memory
-scan of a live process, which is out of scope under A1 and would not change the fix. (b) —
-abandoned chunks are never pruned — is testable: register two chunks for one group, `observe` past
-the first, and assert the first chunk's rows are still present. That test is worth writing when
-F-VAL-030 option 4 lands, because option 4 is what makes the pruning implementable.
+Neither is a test question. (a) — no zeroisation of the JSON `String`s — is `E2` by reading (`store.rs:160`, `:190`, `:215`) and cannot be observed from Rust; demonstrating it needs a memory scan of a live process, which is out of scope under A1 and would not change the fix. (b) — abandoned chunks are never pruned — is testable: register two chunks for one group, `observe` past the first, and assert the first chunk's rows are still present. That test is worth writing when F-VAL-030 option 4 lands, because option 4 is what makes the pruning implementable.
 
 ### Remediation check
 
-**Option 3 (execute `PRAGMA foreign_keys = ON` explicitly in `SecretStore::new`) is sound and should
-be taken now, before the test settles Q3.** It is one idempotent statement, it costs nothing, and
-its value is that it makes the behaviour a property of this repository rather than of a dependency
-default — which is the reviewer's actual point and is right. The alternative the option offers
-(drop the FK, delete from `nonces` with a joined `NOT IN`) is also correct but is a bigger change
-for the same effect; take the pragma.
+**Option 3 (execute `PRAGMA foreign_keys = ON` explicitly in `SecretStore::new`) is sound and should be taken now, before the test settles Q3.** It is one idempotent statement, it costs nothing, and its value is that it makes the behaviour a property of this repository rather than of a dependency default — which is the reviewer's actual point and is right. The alternative the option offers (drop the FK, delete from `nonces` with a joined `NOT IN`) is also correct but is a bigger change for the same effect; take the pragma.
 
-**Option 4 (add the missing store tests) is sound and is the same test as Q3.** Note the option
-proposes the two-group variant, which is strictly better than the empty-set variant because it also
-pins that the *retained* group's rows survive — a fix for F-VAL-066 option 3 (never issue an
-unqualified `DELETE`) would make the empty-set variant vacuous, and the two-group variant would
-keep working. Write it that way.
+**Option 4 (add the missing store tests) is sound and is the same test as Q3.** Note the option proposes the two-group variant, which is strictly better than the empty-set variant because it also pins that the _retained_ group's rows survive — a fix for F-VAL-066 option 3 (never issue an unqualified `DELETE`) would make the empty-set variant vacuous, and the two-group variant would keep working. Write it that way.
 
-**Option 1 (`zeroize::Zeroizing<String>`) is sound and its scope is understated.** The claim that
-`zeroize` "is already in the dependency graph via `k256`" is right, but wrapping the two obvious
-sites does not cover the path the finding cares about most: `serde_json::to_string` and
-`from_str` allocate and reallocate internally, so intermediate buffers are not reached by wrapping
-the final `String`. The honest version of this fix is "reduce the exposure", not "eliminate it",
-and it should be described that way or it will be believed to have done more than it has. Under A1
-that is acceptable; overstating it is not.
+**Option 1 (`zeroize::Zeroizing<String>`) is sound and its scope is understated.** The claim that `zeroize` "is already in the dependency graph via `k256`" is right, but wrapping the two obvious sites does not cover the path the finding cares about most: `serde_json::to_string` and `from_str` allocate and reallocate internally, so intermediate buffers are not reached by wrapping the final `String`. The honest version of this fix is "reduce the exposure", not "eliminate it", and it should be described that way or it will be believed to have done more than it has. Under A1 that is acceptable; overstating it is not.
 
-**Option 2 (record the chunk index and prune below `next_sequence >> 10`) is sound and composes as
-claimed with F-VAL-030 option 4** — both need the chunk index carried through
-`Effect::NonceTree`/`Resume::NonceTree` and stored on the `nonces_chunks` row, so they are one
-change and should be scheduled together. One correction: the predicate must be
-`chunk < next_sequence >> 10` **for the group's own epoch**, and `nonces_chunks` currently records
-`group_id` but not the epoch; since a group belongs to exactly one epoch that is derivable, but the
-reconciliation effect does not currently carry `next_sequence` at all. Say so, or this reads as a
-schema-only change.
+**Option 2 (record the chunk index and prune below `next_sequence >> 10`) is sound and composes as claimed with F-VAL-030 option 4** — both need the chunk index carried through `Effect::NonceTree`/`Resume::NonceTree` and stored on the `nonces_chunks` row, so they are one change and should be scheduled together. One correction: the predicate must be `chunk < next_sequence >> 10` **for the group's own epoch**, and `nonces_chunks` currently records `group_id` but not the epoch; since a group belongs to exactly one epoch that is derivable, but the reconciliation effect does not currently carry `next_sequence` at all. Say so, or this reads as a schema-only change.
 
-**Severity.** I agree with C-VAL-B that Low is correct under A1 and would not raise it. Worth
-recording explicitly that (c) is the only part whose failure is silent and unbounded, and that it is
-also the only part settled by a five-line test — which is an unusually good ratio and the reason to
-do it first.
+**Severity.** I agree with C-VAL-B that Low is correct under A1 and would not raise it. Worth recording explicitly that (c) is the only part whose failure is silent and unbounded, and that it is also the only part settled by a five-line test — which is an unusually good ratio and the reason to do it first.
 
 ## Verification (V-VAL, Phase 5)
 
-**Leg (c) — "the only path that erases retired groups' nonces … depends on an unasserted SQLite
-pragma" — is REFUTED at `E1`.** VAL-Q3 and shared question 12 are both settled.
+**Leg (c) — "the only path that erases retired groups' nonces … depends on an unasserted SQLite pragma" — is REFUTED at `E1`.** VAL-Q3 and shared question 12 are both settled.
 
 ### By execution
 
-`poc/V-VAL-dependency-questions/pragmas.rs`, wired into `crate::secrets` and run against a pool built
-exactly the way `crates/validator/src/main.rs:46` builds one (URL parsed into
-`SqliteConnectOptions`, then `safenet_core::utils::connect_sqlite`):
+`poc/V-VAL-dependency-questions/pragmas.rs`, wired into `crate::secrets` and run against a pool built exactly the way `crates/validator/src/main.rs:46` builds one (URL parsed into `SqliteConnectOptions`, then `safenet_core::utils::connect_sqlite`):
 
 ```
 === file-backed, url-parsed, exactly as main.rs ===
@@ -389,10 +322,7 @@ nonces rows after  retain_nonces([]) = 0, chunk rows = 0
 test secrets::poc_v_val_pragmas::on_delete_cascade_actually_fires ... ok
 ```
 
-Corroborated independently by
-`poc/F-VAL-005-066/secrets_reconciliation.rs::reconciliation_cascades_away_a_committed_nonce_chunk`,
-which reaches the same conclusion through the public `SecretStore` API. Full output:
-`poc/V-VAL-dependency-questions/RESULT-pragmas.txt`.
+Corroborated independently by `poc/F-VAL-005-066/secrets_reconciliation.rs::reconciliation_cascades_away_a_committed_nonce_chunk`, which reaches the same conclusion through the public `SecretStore` API. Full output: `poc/V-VAL-dependency-questions/RESULT-pragmas.txt`.
 
 ### By source
 
@@ -405,20 +335,12 @@ which reaches the same conclusion through the public `SecretStore` API. Full out
 pragmas.insert("foreign_keys".into, Some("ON".into));
 ```
 
-The `ON DELETE CASCADE` at `store.rs:80-87` is **not** decorative. Retired groups' nonce rows are
-deleted, not orphaned.
+The `ON DELETE CASCADE` at `store.rs:80-87` is **not** decorative. Retired groups' nonce rows are deleted, not orphaned.
 
 ### What this changes
 
-Leg (c) drops out. The remaining legs are untouched by this run and were never pragma-dependent:
-secret nonce material copied into unzeroised JSON strings, and abandoned chunks never pruned. They
-keep their prior basis.
+Leg (c) drops out. The remaining legs are untouched by this run and were never pragma-dependent: secret nonce material copied into unzeroised JSON strings, and abandoned chunks never pruned. They keep their prior basis.
 
-**The hardening recommendation survives the refutation and should be kept.** The behaviour is a
-library default that `sqlx` chose against SQLite's own default and documents as a choice; nothing in
-this workspace asserts it, and a connection URL carrying `foreign_keys=off` would silently disable
-it. One explicit `.foreign_keys(true)` in `connect_sqlite`, and the test above landed in-tree, cost
-almost nothing. Note also `journal_mode = delete`: WAL is **not** enabled, so writers block readers
-outright — see F-VAL-038.
+**The hardening recommendation survives the refutation and should be kept.** The behaviour is a library default that `sqlx` chose against SQLite's own default and documents as a choice; nothing in this workspace asserts it, and a connection URL carrying `foreign_keys=off` would silently disable it. One explicit `.foreign_keys(true)` in `connect_sqlite`, and the test above landed in-tree, cost almost nothing. Note also `journal_mode = delete`: WAL is **not** enabled, so writers block readers outright — see F-VAL-038.
 
 Certainty **45% → 35%**, Status **Verified (reduced)**, severity **Low** unchanged.

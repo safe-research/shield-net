@@ -1,25 +1,14 @@
 # PoC — F-XC-003 (`deny_unknown_fields` + `#[serde(flatten)]`)
 
-**Never compiled, never run.** No Rust toolchain on the audit machine (A9 FALSE). Written
-against the checkout at commit `2893917`.
+**Never compiled, never run.** No Rust toolchain on the audit machine (A9 FALSE). Written against the checkout at commit `2893917`.
 
 ## What this settles
 
-Whether a mistyped key in `validator.toml` or `sentinel.toml` is **rejected** or **silently
-accepted**. Serde's behaviour for `#[serde(deny_unknown_fields)]` on a container that also has a
-`#[serde(flatten)]` field is a known library subtlety and its source is not on disk (A6), so
-`F-XC-003`'s pivotal leg is class `I` and the finding sits at 58% (Plausible).
+Whether a mistyped key in `validator.toml` or `sentinel.toml` is **rejected** or **silently accepted**. Serde's behaviour for `#[serde(deny_unknown_fields)]` on a container that also has a `#[serde(flatten)]` field is a known library subtlety and its source is not on disk (A6), so `F-XC-003`'s pivotal leg is class `I` and the finding sits at 58% (Plausible).
 
-There is a fact in this checkout that survives whatever serde does, and it is why the question
-matters: the container everything flattened is routed *into*, `core::driver::Config`, is
-`#[serde(default)]` with **no** `deny_unknown_fields` (`crates/core/src/driver.rs:29-37`) —
-unlike all five of its sibling config structs in `core` (`tx/mod.rs:70`, `index/blocks.rs:48`,
-`index/mod.rs:21`, `index/events.rs:72`, `observability/mod.rs:17`). An unknown key that reaches
-it is dropped in silence.
+There is a fact in this checkout that survives whatever serde does, and it is why the question matters: the container everything flattened is routed _into_, `core::driver::Config`, is `#[serde(default)]` with **no** `deny_unknown_fields` (`crates/core/src/driver.rs:29-37`) — unlike all five of its sibling config structs in `core` (`tx/mod.rs:70`, `index/blocks.rs:48`, `index/mod.rs:21`, `index/events.rs:72`, `observability/mod.rs:17`). An unknown key that reaches it is dropped in silence.
 
-The engine crate has `rejects_unknown_field` (`crates/sentinel-engine/src/config.rs:129-144`)
-and is also the one config with **no** flattened field, so its green test says nothing about the
-interaction. The validator and the sentinel — the two that do flatten — have no such test.
+The engine crate has `rejects_unknown_field` (`crates/sentinel-engine/src/config.rs:129-144`) and is also the one config with **no** flattened field, so its green test says nothing about the interaction. The validator and the sentinel — the two that do flatten — have no such test.
 
 ## Install and run
 
@@ -42,28 +31,14 @@ Both are unit tests inside binary-only crates, so they cannot be integration tes
 
 ## Fixtures
 
-Attacker input is not involved — this is an honest operator's typo under A1. The literal inputs
-are in the test bodies: `not_a_real_field = "typo"` at top level, `use_client_filterring`
-(double `r`) inside `[index]`, `max_reorg_dept` (missing `h`) inside `[index]`, `votin_window`
-inside `[sentinel]`, and `[observabilty]` as a mistyped table name.
+Attacker input is not involved — this is an honest operator's typo under A1. The literal inputs are in the test bodies: `not_a_real_field = "typo"` at top level, `use_client_filterring` (double `r`) inside `[index]`, `max_reorg_dept` (missing `h`) inside `[index]`, `votin_window` inside `[sentinel]`, and `[observabilty]` as a mistyped table name.
 
 ## Remediation check (QA-XC)
 
-`F-XC-003` remediation option 1 is "add these tests", so this PoC **is** the remediation and it
-is sound as far as it goes — but it is a detector, not a fix. If the tests fail, the fix is one
-of:
+`F-XC-003` remediation option 1 is "add these tests", so this PoC **is** the remediation and it is sound as far as it goes — but it is a detector, not a fix. If the tests fail, the fix is one of:
 
-1. Add `#[serde(deny_unknown_fields)]` to `core::driver::Config` (`crates/core/src/driver.rs:30`),
-   matching its five siblings. **This is the one I would take** — it is one line, it makes the
-   repo internally consistent, and it closes the half of the defect that does not depend on
-   serde's behaviour at all. Note that it does *not* on its own guarantee the outer container's
-   attribute starts working; the tests above are how you find out.
-2. Drop the flatten and give `driver` an explicit `[driver]` table. Correct but a breaking
-   configuration change for every deployed operator, and the handbooks would need rewriting.
-3. Echo the fully resolved configuration at `info` on startup. This does not prevent the typo
-   but converts a silent degradation into something an operator can see, and it is the same
-   remediation `F-ENG-009` asks for in the engine. Cheap, and worth doing regardless of the
-   outcome above.
+1. Add `#[serde(deny_unknown_fields)]` to `core::driver::Config` (`crates/core/src/driver.rs:30`), matching its five siblings. **This is the one I would take** — it is one line, it makes the repo internally consistent, and it closes the half of the defect that does not depend on serde's behaviour at all. Note that it does _not_ on its own guarantee the outer container's attribute starts working; the tests above are how you find out.
+2. Drop the flatten and give `driver` an explicit `[driver]` table. Correct but a breaking configuration change for every deployed operator, and the handbooks would need rewriting.
+3. Echo the fully resolved configuration at `info` on startup. This does not prevent the typo but converts a silent degradation into something an operator can see, and it is the same remediation `F-ENG-009` asks for in the engine. Cheap, and worth doing regardless of the outcome above.
 
-No documented runtime contract is affected (`core::state`'s purity, effect-replay and
-resume-ordering rules are not involved), and there is no Solidity reference for configuration.
+No documented runtime contract is affected (`core::state`'s purity, effect-replay and resume-ordering rules are not involved), and there is no Solidity reference for configuration.

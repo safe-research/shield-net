@@ -1,14 +1,14 @@
 # F-SEN-006 Emitted actions are not idempotent under replay, so every restart and reorg enqueues duplicate `approve`/`commit`/`reveal`/`finalize`/`claim` transactions that revert
 
-| Field                | Value                                                                          |
-| -------------------- | ------------------------------------------------------------------------------ |
-| Status               | Critiqued                                                                      |
-| Crate and module     | sentinel, service.rs (with core: driver.rs, tx/storage.rs)                       |
-| Location             | crates/sentinel/src/service.rs:226-242, 426-437, 519-527, 635-641, 664-671 (related: crates/core/src/driver.rs:266-284, crates/core/src/tx/storage.rs:89-104) |
-| Severity             | Low / Low                                                                  |
-| Certainty            | 85% (set by Critic C-SEN; QA may raise)                                      |
-| Assumptions involved | A5                                                                             |
-| Tags                 | reorg, crash-consistency                                                        |
+| Field | Value |
+| --- | --- |
+| Status | Critiqued |
+| Crate and module | sentinel, service.rs (with core: driver.rs, tx/storage.rs) |
+| Location | crates/sentinel/src/service.rs:226-242, 426-437, 519-527, 635-641, 664-671 (related: crates/core/src/driver.rs:266-284, crates/core/src/tx/storage.rs:89-104) |
+| Severity | Low / Low |
+| Certainty | 85% (set by Critic C-SEN; QA may raise) |
+| Assumptions involved | A5 |
+| Tags | reorg, crash-consistency |
 
 ## Claim
 
@@ -19,7 +19,7 @@ The oracle's own guards mean the duplicates cannot double-vote — they revert w
 ## Basis
 
 | # | Claim | Class (E1, E2, I) | Citation | Verbatim quote |
-| - | ----- | ----------------- | -------- | -------------- |
+| --- | --- | --- | --- | --- |
 | 1 | Commands returned by a (possibly replayed) transition are encoded and queued unconditionally | E2 | crates/core/src/driver.rs:266-284 | `        let mut transactions = Vec::with_capacity(commands.len);`<br>`        for command in commands {`<br>`            match command {`<br>`                state::Command::Action(action) => {`<br>`                    transactions.push(self.actions.encode_action(action));`<br>`                }`<br>`                state::Command::Effect(effect) => self.effects.spawn(effect),`<br>`            }`<br>`        }`<br>``<br>`        if !transactions.is_empty {`<br>`            let result = self.transactions.queue(transactions).await;` |
 | 2 | The queue stores each action as a new row with no deduplication | E2 | crates/core/src/tx/storage.rs:93-102 | `        let mut tx = self.pool.begin.await?;`<br>`        for (transaction, expires_at) in transactions {`<br>`            let request = serde_json::to_string(&transaction)?;`<br>`            sqlx::query("INSERT INTO transactions (request, expires_at) VALUES (?, ?)")`<br>`                .bind(request)`<br>`                .bind(expires_at.map(i64::try_from).transpose?)`<br>`                .execute(&mut *tx)`<br>`                .await?;`<br>`        }`<br>`        tx.commit.await?;` |
 | 3 | The state machine, but not the queue, is rolled back on a reorg | E2 | crates/core/src/state/mod.rs:182-189 | `            Update::Block(BlockUpdate::Uncle { number })`<br>`                if matches!(status, Status::BlockPending { pending } if number < pending)`<br>`                    \|\| matches!(status, Status::BlockEvents { latest } if number <= latest) =>`<br>`            {`<br>`                let (_, state) = self.snapshots.reorg(number).await?;`<br>`                let status = Status::BlockPending { pending: number };`<br>`                (state, status, vec![])`<br>`            }` |
@@ -60,14 +60,14 @@ Tests to add: a driver-level test that queues an action, issues an `Uncle`, repl
 
 ## Trail
 
-- Reviewer R7: drafted from lead SEN-H7, self-estimate 90%. All seven basis citations re-opened in this checkout. The mechanism is E2; the *amount* of gas burned per revert was not measured.
+- Reviewer R7: drafted from lead SEN-H7, self-estimate 90%. All seven basis citations re-opened in this checkout. The mechanism is E2; the _amount_ of gas burned per revert was not measured.
 
 ## Critic (C-SEN)
 
 ### Per-claim verdicts
 
 | # | Verdict | Note |
-| - | ------- | ---- |
+| --- | --- | --- |
 | 1 | **Supported** | `core/driver.rs:266-284` verbatim; commands are encoded and queued with no reference to whether the transition was a replay. |
 | 2 | **Supported** | `core/tx/storage.rs:93-102` verbatim — a bare `INSERT` with no unique index and no idempotency key. I confirmed the table definition carries none either. |
 | 3 | **Supported** | `state/mod.rs:182-189` verbatim; the rollback touches `snapshots` only. `TransactionQueue` is constructed from the same pool but has its own tables (`core/tx/storage.rs`) and no rollback entry point. |
@@ -78,31 +78,18 @@ Tests to add: a driver-level test that queues an action, issues an `Uncle`, repl
 
 ### Assessment
 
-I reached the same conclusion independently and agree with the framing, including the important
-concession that this is **not** a safety defect: every duplicate is rejected by an onchain guard
-(`AlreadyCommitted`, `AlreadyRevealed`, `RequestNotPending`, `AlreadyClaimed`), so no double vote or
-double bond is possible. What remains is cost and capacity.
+I reached the same conclusion independently and agree with the framing, including the important concession that this is **not** a safety defect: every duplicate is rejected by an onchain guard (`AlreadyCommitted`, `AlreadyRevealed`, `RequestNotPending`, `AlreadyClaimed`), so no double vote or double bond is possible. What remains is cost and capacity.
 
 Two refinements:
 
-- The duplicate `Reveal` is the exception that costs nothing, because `expires_at = reveal_deadline`
-  means a replay after the window simply never submits it (`core/tx/storage.rs:150-155`). The
-  expensive duplicates are the expiry-free ones — `Finalize` and `Claim`, both `expires_at: None`
-  (`service.rs:638`, `:667`, `:524`, `:571`) — which are queued forever and always submitted.
-- The `ApproveToken` duplicate is more than a cost: because `approve` *assigns*, a replay after a
-  successful `commit` re-grants a `bondTarget` allowance to the oracle that no `commit` will consume.
-  That is a standing allowance rather than an accumulating one, so it is minor, but it is a
-  functional residue rather than pure gas — and it is the precondition for F-SEN-008's
-  non-zero-to-non-zero variant.
+- The duplicate `Reveal` is the exception that costs nothing, because `expires_at = reveal_deadline` means a replay after the window simply never submits it (`core/tx/storage.rs:150-155`). The expensive duplicates are the expiry-free ones — `Finalize` and `Claim`, both `expires_at: None` (`service.rs:638`, `:667`, `:524`, `:571`) — which are queued forever and always submitted.
+- The `ApproveToken` duplicate is more than a cost: because `approve` _assigns_, a replay after a successful `commit` re-grants a `bondTarget` allowance to the oracle that no `commit` will consume. That is a standing allowance rather than an accumulating one, so it is minor, but it is a functional residue rather than pure gas — and it is the precondition for F-SEN-008's non-zero-to-non-zero variant.
 
 ### Finding verdict
 
 **Confirmed. Certainty 85%. Severity Low (unchanged).**
 
-Mechanism and trigger are both `E2` and the trigger is "any restart", which is certain. Low is
-correct per Section 8: a robustness and cost weakness with limited impact, since every duplicate is
-rejected onchain. It matters mainly as an amplifier of F-SEN-004's in-flight-slot contention, and
-that dependency is already stated.
+Mechanism and trigger are both `E2` and the trigger is "any restart", which is certain. Low is correct per Section 8: a robustness and cost weakness with limited impact, since every duplicate is rejected onchain. It matters mainly as an amplifier of F-SEN-004's in-flight-slot contention, and that dependency is already stated.
 
 ## QA (QA-CORE-SEN)
 
@@ -114,32 +101,15 @@ that dependency is already stated.
 
 **Sound: option 3 is the sentinel-side fix, but the mechanism belongs to F-CORE-067 and cannot be closed here.**
 
-This finding is the sentinel manifestation of **F-CORE-067**; C-SEN and C-CORE-B both say so and I
-agree. The consequence for remediation is concrete: **options 1 and 2 are core changes, not sentinel
-changes**, and only option 3 can be implemented in this crate.
+This finding is the sentinel manifestation of **F-CORE-067**; C-SEN and C-CORE-B both say so and I agree. The consequence for remediation is concrete: **options 1 and 2 are core changes, not sentinel changes**, and only option 3 can be implemented in this crate.
 
-Option 1 (a nullable `key TEXT UNIQUE` column supplied by `ActionEncoder`) is sound and is
-**F-CORE-067 option 1**. The suggested keys — `("commit", request_id)`, `("reveal", request_id)` —
-are exactly right in the property that matters: they are derived from protocol identity, so they are
-stable across a reorg replay in which the encoded calldata might differ. The option's own caveat
-("the key must be cleared or namespaced once a transaction executes") is the hard part, and it is
-harder than it reads: rows are pruned on `executed_at <= safe`, and **F-CORE-063** shows
-`executed_at` is inferred from the account nonce alone and can be wrong. A key freed by a wrongly
-inferred execution re-opens the duplicate. See my QA on F-CORE-067.
+Option 1 (a nullable `key TEXT UNIQUE` column supplied by `ActionEncoder`) is sound and is **F-CORE-067 option 1**. The suggested keys — `("commit", request_id)`, `("reveal", request_id)` — are exactly right in the property that matters: they are derived from protocol identity, so they are stable across a reorg replay in which the encoded calldata might differ. The option's own caveat ("the key must be cleared or namespaced once a transaction executes") is the hard part, and it is harder than it reads: rows are pruned on `executed_at <= safe`, and **F-CORE-063** shows `executed_at` is inferred from the account nonce alone and can be wrong. A key freed by a wrongly inferred execution re-opens the duplicate. See my QA on F-CORE-067.
 
-Option 2 (`eth_call` before broadcasting, drop on revert) is sound, is a core change to
-`submit_transaction`, and is the single change that would also close **F-SEN-007** and **F-SEN-014**.
-Three findings, one round trip per submission. Its benign race (simulation passes, inclusion still
-reverts) is acceptable because the failure mode is unchanged from today.
+Option 2 (`eth_call` before broadcasting, drop on revert) is sound, is a core change to `submit_transaction`, and is the single change that would also close **F-SEN-007** and **F-SEN-014**. Three findings, one round trip per submission. Its benign race (simulation passes, inclusion still reverts) is acceptable because the failure mode is unchanged from today.
 
-Option 3 (make the sentinel's own transitions replay-aware by consulting `getCommitment` via an
-effect before emitting) is sound and is implementable here — and it is the same reconciliation effect
-**F-SEN-001 option 2**, **F-SEN-002 option 2**, **F-SEN-003 option 4** and **F-SEN-015 option 1**
-need. Same two conditions each time: it must be `Command::Effect` + `Resume` (transitions are pure
-and non-`async`), and a failed read must not drop the entry.
+Option 3 (make the sentinel's own transitions replay-aware by consulting `getCommitment` via an effect before emitting) is sound and is implementable here — and it is the same reconciliation effect **F-SEN-001 option 2**, **F-SEN-002 option 2**, **F-SEN-003 option 4** and **F-SEN-015 option 1** need. Same two conditions each time: it must be `Command::Effect` + `Resume` (transitions are pure and non-`async`), and a failed read must not drop the entry.
 
-Option 4 (count reverted submissions) is worth taking regardless; the queue currently does not
-observe execution status at all beyond a nonce comparison.
+Option 4 (count reverted submissions) is worth taking regardless; the queue currently does not observe execution status at all beyond a nonce comparison.
 
 ## Post-merge revalidation (RV-SEN)
 
@@ -147,9 +117,7 @@ Re-validated against merge commit `a7f3915` (baseline `2893917`).
 
 ### Verdict: **STILL VALID** — mechanism unchanged; the list of duplicated actions has moved and grown by one
 
-`crates/core` is byte-identical across the merge, so the root cause is untouched:
-`crates/core/src/driver.rs:266-284` and `crates/core/src/tx/storage.rs:89-104` (a plain `INSERT`
-with no idempotency key) are exactly as cited. See **F-CORE-067**, also re-validated this run.
+`crates/core` is byte-identical across the merge, so the root cause is untouched: `crates/core/src/driver.rs:266-284` and `crates/core/src/tx/storage.rs:89-104` (a plain `INSERT` with no idempotency key) are exactly as cited. See **F-CORE-067**, also re-validated this run.
 
 **Emission-site citations, remapped:**
 
@@ -164,34 +132,10 @@ with no idempotency key) are exactly as cited. See **F-CORE-067**, also re-valid
 | `Claim` (`handle_request_timed_out`) | — new | `service.rs:696-704` |
 | `Claim` (`handle_oracle_result`) | — new | `service.rs:807-815` |
 
-Net effect of `199629e`: the `Claim` that used to be emitted synchronously inside `finalize` is now
-emitted from handlers for three replayable onchain logs (`RequestTimedOut`, `OracleResult`,
-`DisputeTriggered`+`DisputeResolved`). That is one *more* replay-duplicated action site, not fewer —
-a replayed terminal log re-emits `Claim` for a request whose entry the replayed snapshot still
-contains, and `claim()` reverts `AlreadyClaimed` exactly as the finding describes. Every emitted
-`Claim` and `Finalize` still carries `expires_at: None`, so the queue never prunes them
-(`core/tx/storage.rs:259-262`).
+Net effect of `199629e`: the `Claim` that used to be emitted synchronously inside `finalize` is now emitted from handlers for three replayable onchain logs (`RequestTimedOut`, `OracleResult`, `DisputeTriggered`+`DisputeResolved`). That is one _more_ replay-duplicated action site, not fewer — a replayed terminal log re-emits `Claim` for a request whose entry the replayed snapshot still contains, and `claim()` reverts `AlreadyClaimed` exactly as the finding describes. Every emitted `Claim` and `Finalize` still carries `expires_at: None`, so the queue never prunes them (`core/tx/storage.rs:259-262`).
 
 **Certainty 85% and severity Low / Low unchanged.** Status left at `Critiqued`.
 
 ## In-flight impact (FWD)
 
-**Pertains to unmerged branches, not to `main`.** Assessed against the "Batched Execution" stack
-(`origin/feat/batex_0` … `origin/feat/batex_4`, PRs #899–#904). **Effect: unchanged, worsen
-downstream.** `crates/sentinel/src/service.rs` takes **+5 lines** in the cumulative diff, all of them
-mechanical `authorization: None` initialisers in `SentinelEncoder`'s `Transaction` literals following
-Phase 3's new struct field. None of the five duplicate-producing paths — `commit_vote`'s
-`ApproveToken` + `Commit`, `handle_block_advance`'s `Reveal`, `finalize`'s `Finalize` + `Claim`, and
-`Claim` from `handle_resolved` / `handle_arbitration_timeout` — is touched, and `enqueue` is still the
-plain `INSERT` with no idempotency key (`F-CORE-067`), so the claim reproduces verbatim at the branch
-tip. Batching changes the shape of the waste rather than its existence: once Phase 7 lands (not on
-any pushed branch), each replay enqueues a duplicate *batch* — fewer nonces and fewer in-flight slots
-consumed per replay, which is a genuine improvement to the capacity half of this finding — but the
-duplicates' reverts (`AlreadyCommitted`, `AlreadyRevealed`, `RequestNotPending`, `AlreadyClaimed`)
-are swallowed by `Safenet7702Executor.execute` into `CallFailed` events on the sentinel's own EOA and
-the batch transaction reports success. The reverts that today are at least visible as failed
-transactions become invisible, which matters because they are the only evidence the duplication is
-happening. The `ApproveToken` edge case worsens too: `execute` does **not** stop on a failed call, so
-an allowance-rejecting approve (`F-SEN-008`) is followed by a `Commit` that runs anyway and reverts
-for want of allowance — two swallowed failures in one apparently successful transaction. Filed as
-**`F-CORE-068`**. Severity and certainty unchanged. See `rust-audit/report/IN-FLIGHT.md`.
+**Pertains to unmerged branches, not to `main`.** Assessed against the "Batched Execution" stack (`origin/feat/batex_0` … `origin/feat/batex_4`, PRs #899–#904). **Effect: unchanged, worsen downstream.** `crates/sentinel/src/service.rs` takes **+5 lines** in the cumulative diff, all of them mechanical `authorization: None` initialisers in `SentinelEncoder`'s `Transaction` literals following Phase 3's new struct field. None of the five duplicate-producing paths — `commit_vote`'s `ApproveToken` + `Commit`, `handle_block_advance`'s `Reveal`, `finalize`'s `Finalize` + `Claim`, and `Claim` from `handle_resolved` / `handle_arbitration_timeout` — is touched, and `enqueue` is still the plain `INSERT` with no idempotency key (`F-CORE-067`), so the claim reproduces verbatim at the branch tip. Batching changes the shape of the waste rather than its existence: once Phase 7 lands (not on any pushed branch), each replay enqueues a duplicate _batch_ — fewer nonces and fewer in-flight slots consumed per replay, which is a genuine improvement to the capacity half of this finding — but the duplicates' reverts (`AlreadyCommitted`, `AlreadyRevealed`, `RequestNotPending`, `AlreadyClaimed`) are swallowed by `Safenet7702Executor.execute` into `CallFailed` events on the sentinel's own EOA and the batch transaction reports success. The reverts that today are at least visible as failed transactions become invisible, which matters because they are the only evidence the duplication is happening. The `ApproveToken` edge case worsens too: `execute` does **not** stop on a failed call, so an allowance-rejecting approve (`F-SEN-008`) is followed by a `Commit` that runs anyway and reverts for want of allowance — two swallowed failures in one apparently successful transaction. Filed as **`F-CORE-068`**. Severity and certainty unchanged. See `rust-audit/report/IN-FLIGHT.md`.

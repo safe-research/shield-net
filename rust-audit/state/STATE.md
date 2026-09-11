@@ -15,9 +15,9 @@ Merged `origin/main` (21 commits). Only **`crates/sentinel`** changed in Rust (+
 
 **Nothing was fixed outright. Two findings got worse.**
 
-| | |
+|  |  |
 | --- | --- |
-| `F-VAL-001` | **STILL VALID**, Critical 97% — PoC re-run **6/6 pass** against merged contracts. The `FROSTCoordinator.sol` +11 is **100% NatSpec**; `keyGenCommit`/`keyGenComplain` byte-identical; `FROSTParticipantMap.sol` untouched. **I-08 cannot block it**: its `assert(id != 0)` is in the *signing* path, never reached from keygen, and asserts on a hash output rather than attacker input. |
+| `F-VAL-001` | **STILL VALID**, Critical 97% — PoC re-run **6/6 pass** against merged contracts. The `FROSTCoordinator.sol` +11 is **100% NatSpec**; `keyGenCommit`/`keyGenComplain` byte-identical; `FROSTParticipantMap.sol` untouched. **I-08 cannot block it**: its `assert(id != 0)` is in the _signing_ path, never reached from keygen, and asserts on a hash output rather than attacker input. |
 | `F-SEN-001` | **STILL VALID, 98 -> 99%** — `[Part 7] Use oracle events over local inference` rewrote only the post-`finalize` path. `handle_committed`'s discard and the `!self_committed` no-reveal drop are **byte-identical**; the PoC still fails identically. The merge **propagates the defect to a second site**: the new `approve_and_slash_amount` recovery repeats the same false inference and emits no `Claim` either. |
 | `F-SEN-005` | **STILL VALID and widened, 86 -> 95%** — `WaitingForOutcome` adds a **second** never-expiring state, and `874064c` puts the arbitration deadline on the wire while `handle_dispute_triggered` **never reads it**. |
 | `F-SEN-002` | **PARTIALLY ADDRESSED** — primary drop intact (still High); the mirror case is fixed. |
@@ -38,7 +38,7 @@ The new work is a **stacked, unmerged PR chain** — the Batched Execution epic,
 | Finding | Effect of the stack |
 | --- | --- |
 | `F-CORE-067` | unchanged in kind, **worse in radius** — `enqueue` is the identical unconditional `INSERT`; the +186 storage lines add a **non-unique** `nonce` index, span logic and tests, **no idempotency key**. After Phase 7 a replay duplicates a **batch**. |
-| `F-CORE-062`, `F-CORE-063` | **worsened.** 062 now *creates* two-nonce reservations, so the epic's own acknowledged "authorization didn't apply" path writes a **permanent unfillable gap**. 063 now covers a 6-8 action batch plus a new whole-batch revert. |
+| `F-CORE-062`, `F-CORE-063` | **worsened.** 062 now _creates_ two-nonce reservations, so the epic's own acknowledged "authorization didn't apply" path writes a **permanent unfillable gap**. 063 now covers a 6-8 action batch plus a new whole-batch revert. |
 | `F-CORE-064` | **reshaped** — the delegation is `expires_at: None` by design; a late batch lands all its stale actions at one nonce. |
 | `F-CORE-065` | **worsened** — the 7702 authorization's `chain_id` comes from the same connect-time cache; a stale id leaves a mined tx with an unapplied delegation. |
 | `F-CORE-060`/`061`, `F-CORE-066`, `F-VAL-063`, `F-XC-009`, `F-VAL-065`, `F-SEN-006`/`007` | unchanged; several gain new surface (`max_batch_gas` accepts 0, `executor` accepts the zero address, neither validated). |
@@ -51,17 +51,16 @@ All 108 findings mapped onto 24 issues, 8 TODOs and 3 epics: **11 already tracke
 
 **Four closed issues whose defect still reproduces** — the most actionable result of this round:
 
-- **#801** *Nonces might not be retained during a reorg* (closed by PR #803 + regression test PR #807) -> `F-VAL-005`. The fix broadened `retain_nonces` but left `retain_keygen_secrets` in the same function, and **the regression test added to close it exhibits the residual inside its own passing run** — epoch 1 lost network-wide while the suite prints SUCCESS.
-- **#820** *Reorgs exceeding max reorg depth* (closed by PR #834) -> `F-CORE-001`, `F-CORE-030`, `F-CORE-005`. The closing PR's **own body flags the unpersisted safe-block hash**, and no follow-up was filed; the exit it added returns **status 0**.
-- **#656** *Only Bump Fees on Underpriced Transactions* (closed by PR #686) -> `F-CORE-060`, and `F-CORE-061` was **introduced by that fix**.
-- **#614** *Evaluate Parallel Execution of Effects* -> `F-SEN-001/002/015`: the `WaitingForEngineCheck` variant its analysis recommended exists, but the queuing does not.
+- **#801** _Nonces might not be retained during a reorg_ (closed by PR #803 + regression test PR #807) -> `F-VAL-005`. The fix broadened `retain_nonces` but left `retain_keygen_secrets` in the same function, and **the regression test added to close it exhibits the residual inside its own passing run** — epoch 1 lost network-wide while the suite prints SUCCESS.
+- **#820** _Reorgs exceeding max reorg depth_ (closed by PR #834) -> `F-CORE-001`, `F-CORE-030`, `F-CORE-005`. The closing PR's **own body flags the unpersisted safe-block hash**, and no follow-up was filed; the exit it added returns **status 0**.
+- **#656** _Only Bump Fees on Underpriced Transactions_ (closed by PR #686) -> `F-CORE-060`, and `F-CORE-061` was **introduced by that fix**.
+- **#614** _Evaluate Parallel Execution of Effects_ -> `F-SEN-001/002/015`: the `WaitingForEngineCheck` variant its analysis recommended exists, but the queuing does not.
 
 ## Result
 
-**108 findings — Critical 4 · High 20 · Medium 32 · Low 41 · Informational 11.**
-Certainty 35–99%; 21 validated end-to-end on local Anvil.
+**108 findings — Critical 4 · High 20 · Medium 32 · Low 41 · Informational 11.** Certainty 35–99%; 21 validated end-to-end on local Anvil.
 
-| Critical | | |
+| Critical |  |  |
 | --- | --- | --- |
 | `F-ENG-030` | 99% | `secure` verdict on 1000 ETH to an attacker EOA — drained on a real Safe proxy |
 | `F-ENG-031` | 99% | refund leg never vetted — 100.0003 ETH and 0.503 tokens actually paid out |
@@ -77,18 +76,18 @@ All three engine Criticals are instances of **`F-ENG-044`** (first-non-abstain-w
 ## What the audit corrected in itself
 
 - **`F-VAL-033` fell Critical → High** (85→72%): the un-burn is real, but the validator self-halts before any nonce reuse — self-inflicted DoS, not key leakage.
-- **Five claims refuted by execution**: `F-SEN-013`'s indexer stall (alloy decodes invalid UTF-8 lossily); the secret-leak cluster (`frost-core` *does* redact — QA's evidence was a false positive); `F-VAL-035` leg c; `F-XC-007` item 2; the alloy memory-exhaustion worry.
+- **Five claims refuted by execution**: `F-SEN-013`'s indexer stall (alloy decodes invalid UTF-8 lossily); the secret-leak cluster (`frost-core` _does_ redact — QA's evidence was a false positive); `F-VAL-035` leg c; `F-XC-007` item 2; the alloy memory-exhaustion worry.
 - **3 hallucinated claims** found and struck, none collapsing its finding.
 - **0 findings refuted by any passing integration suite.**
 - Four Manager readings were overturned by agents told to verify rather than trust.
 
 ## Method, in one paragraph
 
-Ten reviewers read all 83 in-scope files (24,203 lines) to 100%. Nine Critics re-derived each finding from the cited code *before* reading the reviewer's argument, and set certainty independently. Four QA agents wrote PoCs and checked remediations. Phases 5–8 executed them: unit PoCs, then the Anvil integration suites, then end-to-end scenarios with real contracts and real binaries. Findings are append-only trails — reviewer → Critic → QA → Verification → Real-world — so every conclusion is checkable and disagreements stay visible.
+Ten reviewers read all 83 in-scope files (24,203 lines) to 100%. Nine Critics re-derived each finding from the cited code _before_ reading the reviewer's argument, and set certainty independently. Four QA agents wrote PoCs and checked remediations. Phases 5–8 executed them: unit PoCs, then the Anvil integration suites, then end-to-end scenarios with real contracts and real binaries. Findings are append-only trails — reviewer → Critic → QA → Verification → Real-world — so every conclusion is checkable and disagreements stay visible.
 
 ## Reference
 
-| File | |
+| File |  |
 | --- | --- |
 | [`report/REPORT.md`](../report/REPORT.md) | the report |
 | [`findings/`](../findings/) | 108 findings, full evidence trails |

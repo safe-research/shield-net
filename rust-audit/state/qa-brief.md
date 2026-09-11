@@ -42,7 +42,7 @@ You may **raise** a certainty only within the `E2` ceiling of **89%**, and only 
 
 ## 3. Settle the dependency questions you can
 
-Several findings are blocked on behaviour of `frost-core`, `alloy-sol-types`, `serde` and `sqlx` whose sources are **not on disk**. You cannot resolve those (A6 keeps them class `I`). What you *can* do is write down, per finding, the **exact check** that would settle it — the file and item to read in the vendored source, or the three-line program to run — so the team can close it in minutes. Collect these into `rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`.
+Several findings are blocked on behaviour of `frost-core`, `alloy-sol-types`, `serde` and `sqlx` whose sources are **not on disk**. You cannot resolve those (A6 keeps them class `I`). What you _can_ do is write down, per finding, the **exact check** that would settle it — the file and item to read in the vendored source, or the three-line program to run — so the team can close it in minutes. Collect these into `rust-audit/poc/UNRESOLVED-DEPENDENCY-QUESTIONS.md`.
 
 ## 4. Boundaries
 
